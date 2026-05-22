@@ -7,6 +7,7 @@ import tempfile
 # Get the absolute path to the project root (2 levels up from app/services/image_service.py)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CUSTOM_FONT_PATH = os.path.join(BASE_DIR, "assets", "custom_font.ttf")
+MANDALA_PATH = os.path.join(BASE_DIR, "assets", "mandala.png")
 FALLBACK_FONT_PATH = os.path.join(tempfile.gettempdir(), "NotoSerif-Regular.ttf")
 
 def get_font(size):
@@ -53,6 +54,26 @@ def generate_job_image(job, theme="default"):
         text_main = "#2D2D2D"
 
     base = Image.new('RGB', (width, height), bg_color)
+    
+    # Optional: Add a subtle mandala/texture background if the image exists
+    if os.path.exists(MANDALA_PATH):
+        try:
+            mandala = Image.open(MANDALA_PATH).convert("RGBA")
+            # Resize texture to fit nicely within the card
+            m_size = 500
+            mandala = mandala.resize((m_size, m_size), Image.Resampling.LANCZOS)
+            
+            # Reduce opacity to 10% so it acts as a subtle watermark
+            alpha = mandala.split()[3]
+            alpha = alpha.point(lambda p: p * 0.10)
+            mandala.putalpha(alpha)
+            
+            # Paste the mandala in the center-bottom of the card
+            offset = ((width - m_size) // 2, (height - m_size) // 2 + 50)
+            base.paste(mandala, offset, mandala)
+        except Exception as e:
+            print(f"Failed to apply mandala background: {e}")
+
     draw = ImageDraw.Draw(base)
 
     # 1. Traditional Border
