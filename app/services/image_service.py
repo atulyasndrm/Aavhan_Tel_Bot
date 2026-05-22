@@ -1,5 +1,10 @@
+import os
 from PIL import Image, ImageDraw, ImageFont
 import io
+
+# Get the absolute path to the project root (2 levels up from app/services/image_service.py)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CUSTOM_FONT_PATH = os.path.join(BASE_DIR, "assets", "custom_font.ttf")
 
 def generate_job_image(job, theme="default"):
     # Dimensions and "Pavitra" Colors
@@ -38,18 +43,20 @@ def generate_job_image(job, theme="default"):
     draw.rectangle([15, 15, 785, 140], fill=deep_color)
     
     try:
-        font_header = ImageFont.truetype("timesbd.ttf", 48) 
-        font_label = ImageFont.truetype("arial.ttf", 22)
-        font_value = ImageFont.truetype("timesbd.ttf", 34)
-        font_dakshina = ImageFont.truetype("timesbd.ttf", 42)
+        # Try to load the custom bundled font first
+        font_header = ImageFont.truetype(CUSTOM_FONT_PATH, 48) 
+        font_label = ImageFont.truetype(CUSTOM_FONT_PATH, 22)
+        font_value = ImageFont.truetype(CUSTOM_FONT_PATH, 34)
+        font_dakshina = ImageFont.truetype(CUSTOM_FONT_PATH, 42)
     except IOError:
+        # Fallback to system fonts if the custom font file is missing
         try:
             font_header = ImageFont.truetype("DejaVuSans-Bold.ttf", 48)
             font_label = ImageFont.truetype("DejaVuSans.ttf", 22)
             font_value = ImageFont.truetype("DejaVuSans-Bold.ttf", 34)
             font_dakshina = ImageFont.truetype("DejaVuSans-Bold.ttf", 42)
         except IOError:
-            font_header = font_label = font_value = font_dakshina = ImageFont.load_default()
+                font_header = font_label = font_value = font_dakshina = ImageFont.load_default()
 
     # Header Text
     draw.text((width//2, 75), header_text, font=font_header, fill="#FFFFFF", anchor="mm")
