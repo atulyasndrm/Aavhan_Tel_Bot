@@ -7,7 +7,7 @@ from config import ADMIN_ID
 
 # Define conversation states
 # Use 10-14 to ensure these states NEVER overlap with the auth.py KYC states (0-2)
-(TITLE, DATE, TIME, LOCATION, FEES) = range(10, 15)
+(TITLE, DATE, TIME, LOCATION, SAMAGRI, FEES) = range(10, 16)
 
 async def start_job_creation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != int(ADMIN_ID):
@@ -81,9 +81,21 @@ async def get_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['job_location'] = update.message.text
+    
+    reply_keyboard = [["Pandit Will Bring", "Yajman Will Arrange", "To be discussed"]]
     await update.message.reply_text(
-        "💰 Enter the *Fees* (e.g., 2100):",
-        parse_mode="Markdown"
+        "📦 Select or enter the *Samagri (Materials)* arrangement:",
+        parse_mode="Markdown",
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
+    )
+    return SAMAGRI
+
+async def get_samagri(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['job_samagri'] = update.message.text
+    await update.message.reply_text(
+        "💰 Enter the *Fees* (e.g., 2100) or 'To be discussed':",
+        parse_mode="Markdown",
+        reply_markup=ReplyKeyboardRemove()
     )
     return FEES
 
@@ -95,14 +107,15 @@ async def get_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date_str = data['job_date']
     time_str = data['job_time']
     location = data['job_location']
+    samagri = data['job_samagri']
     job_datetime = data['job_datetime'] # Grab the pre-validated datetime
 
     # Insert into Database (This will automatically trigger the broadcast!)
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO jobs (title, date, time, datetime, location, fees, status) 
-            VALUES ($1, $2, $3, $4, $5, $6, 'open')
-        """, title, date_str, time_str, job_datetime, location, fees)
+            INSERT INTO jobs (title, date, time, datetime, location, samagri, fees, status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'open')
+        """, title, date_str, time_str, job_datetime, location, samagri, fees)
 
     # Restore admin keyboard
     keyboard = [
@@ -138,6 +151,7 @@ create_job_conv = ConversationHandler(
         DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
         TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_time)],
         LOCATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_location)],
+        SAMAGRI: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_samagri)],
         FEES: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_fees)],
     },
     fallbacks=[CommandHandler("cancel", cancel_creation)],
