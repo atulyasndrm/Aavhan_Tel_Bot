@@ -57,6 +57,18 @@ async def init_db():
             )
         """)
         
+        # Auto-migrate new columns if the table already existed from an older version
+        await conn.execute("""
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS host_name TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS host_mobile TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS host_email TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS venue TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS city TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS state TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS samagri TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS notes TEXT;
+        """)
+        
         # Create Trigger for LISTEN/NOTIFY (Replaces MongoDB Change Streams)
         await conn.execute("""
             CREATE OR REPLACE FUNCTION notify_new_job() RETURNS TRIGGER AS $$
