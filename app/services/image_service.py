@@ -1,5 +1,7 @@
 import os
 import io
+import urllib.request
+import tempfile
 from PIL import Image, ImageDraw, ImageFont
 
 # ----------------------------------------------------
@@ -11,20 +13,31 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 # Asset Paths
 CUSTOM_FONT_PATH = os.path.join(BASE_DIR, "assets", "custom_font.ttf")
 MANDALA_PATH = os.path.join(BASE_DIR, "assets", "mandala.png")  # Fixed: Missing reference defined
+FALLBACK_FONT_PATH = os.path.join(tempfile.gettempdir(), "NotoSerif-Regular.ttf")
 
 def _get_font_safe(font_path, size):
     """
     Helper function to safely load custom fonts with a fallback 
-    to standard default system font if the asset is missing.
+    to a dynamically downloaded font if the asset is missing.
     """
     try:
         if os.path.exists(font_path):
             return ImageFont.truetype(font_path, size)
     except Exception as e:
         print(f"Error loading custom font at {font_path}: {e}")
+        
+    # Download a scalable fallback font if the local font is missing
+    if not os.path.exists(FALLBACK_FONT_PATH):
+        try:
+            url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserif/NotoSerif-Regular.ttf"
+            urllib.request.urlretrieve(url, FALLBACK_FONT_PATH)
+        except Exception as e:
+            print(f"Font download failed: {e}")
     
-    # Fallback if custom font fails or doesn't exist
-    return ImageFont.load_default()
+    try:
+        return ImageFont.truetype(FALLBACK_FONT_PATH, size)
+    except IOError:
+        return ImageFont.load_default()
 
 def generate_job_image(job, theme="default"):
     # Dimensions and Theme Colors
@@ -82,10 +95,10 @@ def generate_job_image(job, theme="default"):
     draw.rectangle([15, 15, 785, 140], fill=deep_color)
     
     # Safely load font variants
-    font_header = _get_font_safe(CUSTOM_FONT_PATH, 48)
-    font_label = _get_font_safe(CUSTOM_FONT_PATH, 22)
-    font_value = _get_font_safe(CUSTOM_FONT_PATH, 34)
-    font_dakshina = _get_font_safe(CUSTOM_FONT_PATH, 42)
+    font_header = _get_font_safe(CUSTOM_FONT_PATH, 54)
+    font_label = _get_font_safe(CUSTOM_FONT_PATH, 26)
+    font_value = _get_font_safe(CUSTOM_FONT_PATH, 42)
+    font_dakshina = _get_font_safe(CUSTOM_FONT_PATH, 50)
 
     # Render Header Text
     draw.text((width // 2, 75), header_text, font=font_header, fill="#FFFFFF", anchor="mm")
