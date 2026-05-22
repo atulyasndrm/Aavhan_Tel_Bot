@@ -3,7 +3,7 @@ from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboard
 from telegram.ext import ContextTypes, ConversationHandler
 
 from config import ADMIN_ID
-from app.db.mongo import users_col
+from app.db.postgres import db_pool
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,8 @@ NAME, PHONE, DOCUMENT = range(3)
 async def start_verification(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
-    existing = await users_col.find_one({"_id":user.id})
+    async with db_pool.acquire() as conn:
+        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
     
     if existing:
         if existing.get("verified"):
@@ -85,7 +86,7 @@ async def get_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
      
       # Save to DB
     data = {
-        "_id": user.id,
+        "id": user.id,
         "name": context.user_data["name"],
         "phone": context.user_data["phone"],
         "role": "priest",
@@ -95,7 +96,14 @@ async def get_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "doc_type": doc_type,
     }
     
-    await users_col.update_one({"_id": user.id}, {"$set": data}, upsert=True)
+    async with db_pool.acquire() as conn:
+        await conn.execute("""
+            INSERT INTO users (id, name, phone, role, verified, verification_status, document)
+            VALUES ($1, $2, $3, 'priest', FALSE, 'pending', $4)
+            ON CONFLICT (id) DO UPDATE SET 
+            name = EXCLUDED.name, phone = EXCLUDED.phone, 
+            verified = FALSE, verification_status = 'pending', document = EXCLUDED.document
+        """, user.id, data["name"], data["phone"], data["document"])
     
     await update.message.reply_text(
         "✅ Submitted! Waiting for admin approval.",

@@ -1,14 +1,15 @@
-from app.db.mongo import users_col
+from app.db.postgres import db_pool
 
 
 async def get_user_details(user_id: int):
     """Fetches a single user by their ID."""
-    return await users_col.find_one({"_id": user_id})
+    async with db_pool.acquire() as conn:
+        return await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
 
 
 async def get_users_details(user_ids: list[int]):
     """Fetches multiple users from a list of IDs."""
     if not user_ids:
         return []
-    users_cursor = users_col.find({"_id": {"$in": user_ids}})
-    return await users_cursor.to_list(length=len(user_ids))
+    async with db_pool.acquire() as conn:
+        return await conn.fetch("SELECT * FROM users WHERE id = ANY($1::bigint[])", user_ids)

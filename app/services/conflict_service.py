@@ -1,5 +1,5 @@
 from datetime import timedelta
-from app.db.mongo import jobs_col
+from app.db.postgres import db_pool
 
 # A standard duration for pujas, used to calculate time conflicts.
 # For a more advanced system, this could be a field in the job document itself.
@@ -17,29 +17,14 @@ async def has_conflict(priest_id, job_datetime):
     # The end time of the new job, assuming a fixed duration.
     new_job_end_time = job_datetime + timedelta(hours=PUJA_DURATION_HOURS)
     
-    # Duration in milliseconds for the MongoDB query.
-    duration_ms = PUJA_DURATION_HOURS * 60 * 60 * 1000
-
-    # We need to find if there's any existing job that overlaps with the new one.
-    # Two intervals [start1, end1] and [start2, end2] overlap if:
-    # (start1 < end2) and (start2 < end1).
-    #
-    # For us, this translates to:
-    # existing_job.datetime < new_job_end_time
-    # new_job_datetime < (existing_job.datetime + DURATION)
-    #
-    # We use MongoDB's $expr to perform this comparison on the server side.
-    conflict = await jobs_col.find_one({
-        "assigned_priest": priest_id,
-        "status": "assigned",
-        "$expr": {
-            "$and": [
-                # existing_job_start < new_job_end
-                {"$lt": ["$datetime", new_job_end_time]},
-                # new_job_start < existing_job_end
-                {"$lt": [job_datetime, {"$add": ["$datetime", duration_ms]}]}
-            ]
-        }
-    })
+    # Use PostgreSQL to check if there is any overlapping assigned job.
+    # Overlap formula: existing_start < new_end AND new_start < existing_end
+    async with db_pool.acquire() as conn:
+        conflict = await conn.fetchrow("""
+            SELECT id FROM jobs 
+            WHERE assigned_priest = $1 AND status = 'assigned'
+            AND datetime < $2 
+            AND $3 < (datetime + interval '3 hours')
+        """, priest_id, new_job_end_time, job_datetime)
 
     return conflict is not None

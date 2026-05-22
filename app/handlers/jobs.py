@@ -31,11 +31,11 @@ async def list_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 InlineKeyboardButton(
                     "✅ Apply",
-                    callback_data=f"apply_job_{job['_id']}"
+                    callback_data=f"apply_job_{job['id']}"
                 ),
                 InlineKeyboardButton(
                     "❌ Reject",
-                    callback_data=f"reject_job_{job['_id']}"
+                    callback_data=f"reject_job_{job['id']}"
                 )
             ]
         ])
@@ -79,8 +79,8 @@ async def list_applied_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if job.get('status', 'assigned') == 'assigned':
             buttons = [
                 [
-                    InlineKeyboardButton("✅ Mark Completed", callback_data=f"complete_job_{job['_id']}"),
-                    InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_job_{job['_id']}")
+                    InlineKeyboardButton("✅ Mark Completed", callback_data=f"complete_job_{job['id']}"),
+                    InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_job_{job['id']}")
                 ]
             ]
         keyboard = InlineKeyboardMarkup(buttons) if buttons else None
@@ -120,7 +120,7 @@ async def list_rejected_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE)
             [
                 InlineKeyboardButton(
                     "🔄 Re-apply",
-                    callback_data=f"reapply_job_{job['_id']}"
+                    callback_data=f"reapply_job_{job['id']}"
                 )
             ]
         ])

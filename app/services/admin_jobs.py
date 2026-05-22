@@ -74,7 +74,7 @@ async def list_rejected_jobs_for_admin(query: CallbackQuery):
         rejected_by_info = "None"
         if rejected_by_ids:
             priests = await user_service.get_users_details(rejected_by_ids)
-            priest_names = [f"{p.get('name', 'N/A')} (<code>{p['_id']}</code>)" for p in priests]
+            priest_names = [f"{p.get('name', 'N/A')} (<code>{p['id']}</code>)" for p in priests]
             rejected_by_info = "\n - ".join(priest_names)
 
         image_bytes = generate_job_image(job, theme="red")

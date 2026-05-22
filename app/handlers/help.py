@@ -10,13 +10,14 @@ async def help_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
     if user_id == int(ADMIN_ID):
         admin_text = (
             "<b>👑 Admin Commands:</b>\n\n"
+            "/create_job - Create and broadcast a new Puja job\n"
             "/admin_jobs - Open the admin job dashboard\n"
             "/broadcast &lt;message&gt; - Send an announcement to all verified priests\n"
             "/help - Show this menu"
         )
         keyboard = [
-            [KeyboardButton("/admin_jobs"), KeyboardButton("/broadcast")],
-            [KeyboardButton("/help")]
+            [KeyboardButton("/create_job"), KeyboardButton("/admin_jobs")],
+            [KeyboardButton("/broadcast"), KeyboardButton("/help")]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         await update.message.reply_text(admin_text, reply_markup=reply_markup, parse_mode="HTML")

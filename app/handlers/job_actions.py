@@ -1,11 +1,10 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-from bson import ObjectId
 from app.services.conflict_service import has_conflict
 from app.services.broadcast import broadcast_job
 from config import ADMIN_ID
 
-from app.db.mongo import jobs_col
+from app.db.postgres import db_pool
 
 
 async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -24,9 +23,10 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ===== APPLY =====
     if data.startswith("apply_job_"):
-        job_id = ObjectId(data.split("_")[2])
+        job_id = data.split("_")[2]
 
-        job = await jobs_col.find_one({"_id": job_id})
+        async with db_pool.acquire() as conn:
+            job = await conn.fetchrow("SELECT * FROM jobs WHERE id = $1", job_id)
 
         if not job:
            await edit_reply("❌ Job not found.")
@@ -41,47 +41,47 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
            await edit_reply("⛔ Time conflict! You already have a nearby booking.")
            return
 
-        await jobs_col.update_one(
-            {"_id": job_id},
-            {
-            "$set": {
-                "status": "assigned",
-                "assigned_priest": user_id
-            }
-            }
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE jobs SET status = 'assigned', assigned_priest = $1 
+                WHERE id = $2
+            """, user_id, job_id)
 
         await edit_reply("✅ You applied successfully!")
 
     # ===== REJECT =====
     elif data.startswith("reject_job_"):
-       job_id = ObjectId(data.split("_")[2])
+       job_id = data.split("_")[2]
 
-       await jobs_col.update_one(
-         {"_id": job_id},
-         {
-            "$addToSet": {"rejected_by": user_id}
-         }
-       )
+       async with db_pool.acquire() as conn:
+           await conn.execute("""
+               UPDATE jobs SET rejected_by = array_append(rejected_by, $1) 
+               WHERE id = $2 AND NOT ($1 = ANY(rejected_by))
+           """, user_id, job_id)
 
        await edit_reply("❌ Job hidden for you.")
 
     # ===== CANCEL / WITHDRAW =====
     elif data.startswith("cancel_job_"):
-       job_id = ObjectId(data.split("_")[2])
+       job_id = data.split("_")[2]
 
-       update_result = await jobs_col.update_one(
-         {"_id": job_id, "assigned_priest": user_id},
-         {
-            "$set": {"status": "open"},
-            "$unset": {"assigned_priest": ""},
-            "$addToSet": {"rejected_by": user_id}
-         }
-       )
+       async with db_pool.acquire() as conn:
+           result = await conn.execute("""
+               UPDATE jobs 
+               SET status = 'open', 
+                   assigned_priest = NULL, 
+                   rejected_by = array_append(rejected_by, $1) 
+               WHERE id = $2 AND assigned_priest = $1
+           """, user_id, job_id)
+           
+           # UPDATE returns "UPDATE <count>" e.g., "UPDATE 1"
+           modified_count = int(result.split()[-1])
 
-       if update_result.modified_count > 0:
+       if modified_count > 0:
            # Fetch the updated job to broadcast
-           job_to_broadcast = await jobs_col.find_one({"_id": job_id})
+           async with db_pool.acquire() as conn:
+               job_to_broadcast = await conn.fetchrow("SELECT * FROM jobs WHERE id = $1", job_id)
+               
            if job_to_broadcast:
                await broadcast_job(context.application, job_to_broadcast)
            
@@ -109,9 +109,10 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ===== RE-APPLY =====
     elif data.startswith("reapply_job_"):
-        job_id = ObjectId(data.split("_")[2])
+        job_id = data.split("_")[2]
 
-        job = await jobs_col.find_one({"_id": job_id})
+        async with db_pool.acquire() as conn:
+            job = await conn.fetchrow("SELECT * FROM jobs WHERE id = $1", job_id)
 
         if not job:
            await edit_reply("❌ Job not found.")
@@ -126,31 +127,34 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
            await edit_reply("⛔ Time conflict! You already have a nearby booking.")
            return
 
-        await jobs_col.update_one(
-            {"_id": job_id},
-            {
-                "$set": {"status": "assigned", "assigned_priest": user_id},
-                "$pull": {"rejected_by": user_id}
-            }
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE jobs SET status = 'assigned', assigned_priest = $1, 
+                rejected_by = array_remove(rejected_by, $1) 
+                WHERE id = $2
+            """, user_id, job_id)
 
         await edit_reply("✅ You successfully re-applied and got the job!")
 
     # ===== COMPLETE =====
     elif data.startswith("complete_job_"):
-        job_id = ObjectId(data.split("_")[2])
+        job_id = data.split("_")[2]
 
-        update_result = await jobs_col.update_one(
-            {"_id": job_id, "assigned_priest": user_id},
-            {"$set": {"status": "completed"}}
-        )
+        async with db_pool.acquire() as conn:
+            result = await conn.execute("""
+                UPDATE jobs SET status = 'completed' 
+                WHERE id = $1 AND assigned_priest = $2
+            """, job_id, user_id)
+            modified_count = int(result.split()[-1])
 
-        if update_result.modified_count > 0:
+        if modified_count > 0:
             await edit_reply("✅ You have successfully marked this Puja as completed!")
             
             # Notify Admin
             try:
-                job = await jobs_col.find_one({"_id": job_id})
+                async with db_pool.acquire() as conn:
+                    job = await conn.fetchrow("SELECT * FROM jobs WHERE id = $1", job_id)
+                    
                 priest_name = query.from_user.full_name
                 job_title = job.get('title', 'Unknown Puja') if job else 'Unknown Puja'
                 admin_text = (

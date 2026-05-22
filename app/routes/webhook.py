@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request
 from telegram import Update
 
 from app.bot import create_bot
+from app.db.postgres import init_db
 from app.watchers.job_watcher import watch_jobs
 from config import WEBHOOK_URL, BOT_TOKEN
 from app.watchers.reminder_watcher import reminder_loop
@@ -11,10 +12,22 @@ router = APIRouter()
 
 telegram_app = create_bot()
 
+# Flag to prevent double execution
+_startup_done = False
+
 @router.on_event("startup")
 async def startup():
- 
+    global _startup_done
+    if _startup_done:
+        return
+    _startup_done = True
+
+    # Initialize Database pool & schema
+    print("🗄️ Connecting to PostgreSQL...")
+    await init_db()
+
     await telegram_app.initialize()
+    await telegram_app.start()
     url = f"{WEBHOOK_URL}/{BOT_TOKEN}"
     info = await telegram_app.bot.get_webhook_info()
     if info.url != url:
@@ -24,7 +37,7 @@ async def startup():
     asyncio.create_task(watch_jobs(telegram_app))
     asyncio.create_task(reminder_loop(telegram_app))
 
-    print("🚀 Webhook active and MongoDB Watcher started!")
+    print("🚀 Webhook active and Postgres Listener started!")
 
 @router.on_event("shutdown")
 async def shutdown():
@@ -33,7 +46,8 @@ async def shutdown():
     Cleanly shuts down the bot and removes the webhook.
     """
     await telegram_app.bot.delete_webhook()
-    await telegram_app.stop()
+    if telegram_app.running:
+        await telegram_app.stop()
     await telegram_app.shutdown()
 
 @router.post(f"/{BOT_TOKEN}")

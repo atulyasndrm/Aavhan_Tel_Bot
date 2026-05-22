@@ -1,6 +1,6 @@
 # 🕉️ Aavhan - Priest Booking Telegram Bot
 
-A production-grade Telegram Bot designed to seamlessly connect Yajmans (Hosts) with verified Priests (Pandits) for religious ceremonies and pujas. Built with Python, MongoDB, and the `python-telegram-bot` framework.
+A production-grade Telegram Bot designed to seamlessly connect Yajmans (Hosts) with verified Priests (Pandits) for religious ceremonies and pujas. Built with Python, PostgreSQL, and the `python-telegram-bot` framework.
 
 ---
 
@@ -21,6 +21,7 @@ A production-grade Telegram Bot designed to seamlessly connect Yajmans (Hosts) w
 ### 👑 For Admins
 - **Secure Access:** Dedicated `/admin_jobs` panel restricted entirely to the configured `ADMIN_ID`.
 - **Verification Management:** Approve or reject KYC documents submitted by new priests.
+- **Job Creation:** Create new jobs interactively using `/create_job`, which automatically generates and broadcasts an invitation image to all verified priests.
 - **Broadcast Messaging:** Send custom text announcements to all verified priests using `/broadcast <message>`.
 - **Job Dashboard:** 
   - 📬 View all **Open** jobs.
@@ -35,7 +36,7 @@ A production-grade Telegram Bot designed to seamlessly connect Yajmans (Hosts) w
 - **Language:** Python 3.9+
 - **Framework:** `python-telegram-bot` (v20+)
 - **Web Server:** `FastAPI` & `Uvicorn` (for handling Webhooks)
-- **Database:** MongoDB (using `motor` for async I/O)
+- **Database:** PostgreSQL (using `asyncpg` for high-performance async queries & `LISTEN/NOTIFY`)
 - **Image Processing:** `Pillow` (PIL) for on-the-fly generation of rich Pujan Invitation cards.
 
 ---
@@ -45,10 +46,11 @@ A production-grade Telegram Bot designed to seamlessly connect Yajmans (Hosts) w
 ```text
 app/
 ├── db/
-│   └── mongo.py           # MongoDB connection and collections setup
+│   └── postgres.py        # PostgreSQL connection pool and auto-schema generation
 ├── handlers/
 │   ├── admin.py           # User approval/rejection handlers
 │   ├── auth.py            # Registration & KYC conversation
+│   ├── create_job.py      # Admin conversation flow to create and broadcast jobs
 │   ├── help.py            # Dynamic help menus
 │   ├── job_actions.py     # Apply, Reject, Cancel, Re-apply logic
 │   ├── jobs.py            # User job listing commands
@@ -65,7 +67,7 @@ app/
 ├── routes/
 │   └── webhook.py         # FastAPI webhook endpoints
 ├── watchers/
-│   ├── job_watcher.py     # MongoDB change stream watcher for auto-broadcasts
+│   ├── job_watcher.py     # PostgreSQL LISTEN stream watcher for auto-broadcasts
 │   └── reminder_watcher.py# Background task for upcoming job reminders
 └── bot.py                 # Application builder and route registration
 config.py                  # Environment variables manager
@@ -78,7 +80,7 @@ main.py                    # FastAPI application entry point
 
 ### 1. Prerequisites
 - Python 3.9 or higher
-- A running instance of MongoDB (Local or Atlas)
+- Docker (for spinning up the PostgreSQL database)
 - A Telegram Bot Token (from @BotFather)
 
 ### 2. Clone and Install
@@ -103,7 +105,7 @@ Create a `.env` file in the root of the project and add the following keys:
 ```ini
 # .env
 BOT_TOKEN=your_telegram_bot_token_here
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/?retryWrites=true&w=majority
+DATABASE_URL=postgresql://aavhan_user:aavhan_password@localhost:5432/aavhan_db
 ADMIN_ID=your_personal_telegram_user_id
 ```
 

@@ -10,3 +10,4 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGO_URI = os.getenv("MONGO_URI")
 
 ADMIN_ID = os.getenv("ADMIN_ID")
+DATABASE_URL = os.getenv("DATABASE_URL")

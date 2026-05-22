@@ -26,6 +26,7 @@ from app.handlers.auth import (
     PHONE,
     DOCUMENT
 )
+from app.handlers.create_job import create_job_conv
 
 
 def create_bot():
@@ -44,6 +45,8 @@ def create_bot():
         },
         fallbacks=[],
     )
+
+    app.add_handler(create_job_conv)
 
     # ===== Commands =====
     app.add_handler(CommandHandler("help", help_command))

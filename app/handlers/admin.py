@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from app.db.mongo import users_col
+from app.db.postgres import db_pool
 from config import ADMIN_ID
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -21,10 +21,8 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("approve_user_"):
         user_id = int(data.split("_")[2])
 
-        await users_col.update_one(
-            {"_id": user_id},
-            {"$set": {"verified": True, "verification_status": "approved"}}
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("UPDATE users SET verified = TRUE, verification_status = 'approved' WHERE id = $1", user_id)
 
         try:
             await context.bot.send_message(
@@ -40,10 +38,8 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("reject_user_"):
         user_id = int(data.split("_")[2])
 
-        await users_col.update_one(
-            {"_id": user_id},
-            {"$set": {"verified": False, "verification_status": "rejected"}}
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("UPDATE users SET verified = FALSE, verification_status = 'rejected' WHERE id = $1", user_id)
 
         try:
             await context.bot.send_message(
@@ -69,14 +65,16 @@ async def admin_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = " ".join(context.args)
     full_message = f"📢 *Admin Announcement*\n\n{message_text}"
 
-    users = users_col.find({"verified": True})
+    async with db_pool.acquire() as conn:
+        users = await conn.fetch("SELECT * FROM users WHERE verified = TRUE")
+        
     sent_count = 0
 
-    async for user in users:
+    for user in users:
         try:
-            await context.bot.send_message(chat_id=user["_id"], text=full_message, parse_mode="Markdown")
+            await context.bot.send_message(chat_id=user["id"], text=full_message, parse_mode="Markdown")
             sent_count += 1
         except Exception as e:
-            print(f"Broadcast error for {user['_id']}: {e}")
+            print(f"Broadcast error for {user['id']}: {e}")
 
     await update.message.reply_text(f"✅ Broadcast sent successfully to {sent_count} verified priests.")

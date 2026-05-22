@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from app.db.mongo import jobs_col
+from app.db.postgres import db_pool
 
 
 async def reminder_loop(app):
@@ -9,9 +9,10 @@ async def reminder_loop(app):
     while True:
         now = datetime.utcnow()
 
-        jobs = jobs_col.find({"status": "assigned"})
-
-        async for job in jobs:
+        async with db_pool.acquire() as conn:
+            jobs = await conn.fetch("SELECT * FROM jobs WHERE status = 'assigned'")
+            
+        for job in jobs:
 
             # ✅ safety (avoid crash)
             if "datetime" not in job:
@@ -110,10 +111,12 @@ Time left: {time_left}
         elif tag == "2h":
             tags_to_add = ["2h", "24h"]
             
-        await jobs_col.update_one(
-            {"_id": job["_id"]},
-            {"$addToSet": {"reminders_sent": {"$each": tags_to_add}}}
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE jobs 
+                SET reminders_sent = array_cat(reminders_sent, $1::text[]) 
+                WHERE id = $2
+            """, tags_to_add, job["id"])
 
     except Exception as e:
         print("Reminder error:", e)

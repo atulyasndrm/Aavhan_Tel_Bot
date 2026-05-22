@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler
 
-from app.db.mongo import users_col
+from app.db.postgres import db_pool
 from app.handlers.auth import start_verification
 from config import ADMIN_ID
 
@@ -10,13 +10,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Auto-verify the admin so they immediately get access to the menu
     if user.id == int(ADMIN_ID):
-        await users_col.update_one(
-            {"_id": user.id},
-            {"$set": {"verified": True, "verification_status": "approved", "role": "admin", "name": user.full_name}},
-            upsert=True
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("""
+                INSERT INTO users (id, name, role, verification_status, verified)
+                VALUES ($1, $2, 'admin', 'approved', TRUE)
+                ON CONFLICT (id) DO UPDATE SET 
+                verified = TRUE, verification_status = 'approved', role = 'admin', name = EXCLUDED.name
+            """, user.id, user.full_name)
 
-    db_user = await users_col.find_one({"_id": user.id})
+    async with db_pool.acquire() as conn:
+        db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
     
     if not db_user:
         return await start_verification(update, context)
@@ -38,8 +41,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Build the main menu keyboard
     if user.id == int(ADMIN_ID):
         keyboard = [
-            [KeyboardButton("/admin_jobs"), KeyboardButton("/broadcast")],
-            [KeyboardButton("/help")]
+            [KeyboardButton("/create_job"), KeyboardButton("/admin_jobs")],
+            [KeyboardButton("/broadcast"), KeyboardButton("/help")]
         ]
     else:
         keyboard = [
