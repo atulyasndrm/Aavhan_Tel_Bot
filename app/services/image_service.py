@@ -7,7 +7,7 @@ import tempfile
 # Get the absolute path to the project root (2 levels up from app/services/image_service.py)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CUSTOM_FONT_PATH = os.path.join(BASE_DIR, "assets", "custom_font.ttf")
-FALLBACK_FONT_PATH = os.path.join(tempfile.gettempdir(), "Roboto-Regular.ttf")
+FALLBACK_FONT_PATH = os.path.join(tempfile.gettempdir(), "NotoSerif-Regular.ttf")
 
 def get_font(size):
     """Helper to reliably load a TrueType font, downloading a fallback if necessary."""
@@ -16,8 +16,8 @@ def get_font(size):
     except IOError:
         if not os.path.exists(FALLBACK_FONT_PATH):
             try:
-                # Download Google's Roboto font dynamically if no local font is found
-                url = "https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Regular.ttf"
+                # Download Google's Noto Serif font dynamically for a traditional look
+                url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserif/NotoSerif-Regular.ttf"
                 urllib.request.urlretrieve(url, FALLBACK_FONT_PATH)
             except Exception as e:
                 print(f"Font download failed: {e}")
