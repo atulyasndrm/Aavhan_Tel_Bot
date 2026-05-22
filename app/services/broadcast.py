@@ -16,6 +16,17 @@ async def broadcast_job(app, job):
     image_bytes = generate_job_image(job)
     photo_to_send = image_bytes
 
+    # Prepare beautiful broadcast text variables natively falling back on old formats
+    title = job.get('title', job.get('ceremonyType', 'Vishesh Puja'))
+    host = job.get('host_name', job.get('fullName', 'Bhakta'))
+    city_state = f"{job.get('city', '')}, {job.get('state', '')}".strip(', ')
+    location = city_state if city_state else job.get('location', 'N/A')
+    
+    samagri_val = str(job.get('samagri', '')).lower()
+    samagri = "Pandit Will Bring" if 'pandit' in samagri_val else "Yajman Will Arrange" if 'self' in samagri_val else "To be discussed"
+    dakshina = f"₹ {job.get('fees')}" if job.get('fees') else "To be discussed"
+    notes = f"\n\n<i>Note: {job.get('notes')}</i>" if job.get('notes') else ""
+
     for user in users:
         keyboard = InlineKeyboardMarkup([
             [
@@ -35,11 +46,13 @@ async def broadcast_job(app, job):
                 chat_id=user["id"],
                 photo=photo_to_send,
                 caption=f"""
-🕉️ <b>{job['title']}</b>
+🕉️ <b>{title}</b>
 
-<b>Location:</b> {job['location']}
+<b>Host:</b> {host}
+<b>Location:</b> {location}
 <b>Date & Time:</b> {job.get('date', 'N/A')} {job.get('time', 'N/A')}
-<b>Dakshina:</b> ₹{job.get('fees', 'N/A')}
+<b>Samagri:</b> {samagri}
+<b>Dakshina:</b> {dakshina}{notes}
 
 🙏 <i>Please accept or reject this Aavhan.</i>
 """,

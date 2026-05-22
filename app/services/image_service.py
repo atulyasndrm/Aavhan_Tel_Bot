@@ -104,28 +104,47 @@ def generate_job_image(job, theme="default"):
     draw.text((width // 2, 75), header_text, font=font_header, fill="#FFFFFF", anchor="mm")
 
     # 4. Content Dynamic Layout
-    y_offset = 200
+    y_offset = 170
     
-    # Service Name
-    draw.text((70, y_offset), "PUJA", font=font_label, fill=text_gold)
-    pujan_name = str(job.get('title', 'Vishesh Puja')).upper()
-    draw.text((70, y_offset + 35), pujan_name, font=font_value, fill=deep_color)
+    # Row 1
+    # Ceremony Type
+    draw.text((70, y_offset), "CEREMONY / PUJA", font=font_label, fill=text_gold)
+    pujan_name = str(job.get('title', job.get('ceremonyType', 'Vishesh Puja'))).upper()
+    draw.text((70, y_offset + 30), pujan_name[:22], font=font_value, fill=deep_color)
 
+    # Location / City
+    draw.text((450, y_offset), "STHAN (LOCATION)", font=font_label, fill=text_gold)
+    city_state = f"{job.get('city', '')}, {job.get('state', '')}".strip(', ')
+    loc_text = city_state if city_state else str(job.get('location', 'Yajman House'))
+    draw.text((450, y_offset + 30), loc_text[:22], font=font_value, fill=text_main)
+
+    # Row 2
+    y_offset += 115
     # Date & Time
-    draw.text((70, y_offset + 130), "MUHURAT DATE & TIME", font=font_label, fill=text_gold)
+    draw.text((70, y_offset), "MUHURAT DATE & TIME", font=font_label, fill=text_gold)
     datetime_text = f"{job.get('date', 'As per Muhurat')}  {job.get('time', '')}".strip()
-    draw.text((70, y_offset + 165), datetime_text, font=font_value, fill=text_main)
+    draw.text((70, y_offset + 30), datetime_text[:22], font=font_value, fill=text_main)
 
-    # Location
-    draw.text((450, y_offset + 130), "STHAN (LOCATION)", font=font_label, fill=text_gold)
-    draw.text((450, y_offset + 165), str(job.get('location', 'Yajman House')), font=font_value, fill=text_main)
+    # Yajman / Host
+    draw.text((450, y_offset), "YAJMAN (HOST)", font=font_label, fill=text_gold)
+    host_name = str(job.get('host_name', job.get('fullName', 'Bhakta'))).title()
+    draw.text((450, y_offset + 30), host_name[:22], font=font_value, fill=text_main)
+
+    # Row 3
+    y_offset += 115
+    # Samagri
+    draw.text((70, y_offset), "SAMAGRI (MATERIALS)", font=font_label, fill=text_gold)
+    samagri_val = str(job.get('samagri', '')).lower()
+    samagri_text = "Pandit Will Bring" if 'pandit' in samagri_val else "Yajman Will Arrange" if 'self' in samagri_val else "To be discussed"
+    draw.text((70, y_offset + 30), samagri_text, font=font_value, fill=text_main)
 
     # 5. Dakshina Section (Bottom Layout)
     draw.line([70, 500, 730, 500], fill=primary_color, width=2)
     
     draw.text((70, 530), "DAKSHINA", font=font_label, fill=text_gold)
-    dakshina = job.get('fees', 'Swayam Iccha')
-    draw.text((70, 565), f"₹ {dakshina}", font=font_dakshina, fill=deep_color)
+    dakshina = job.get('fees', 'To be discussed')
+    dakshina_text = f"₹ {dakshina}" if any(c.isdigit() for c in str(dakshina)) else str(dakshina)
+    draw.text((70, 565), dakshina_text, font=font_dakshina, fill=deep_color)
 
     # Branding
     draw.text((600, 570), "AAVHAN", font=font_label, fill="#C43636")
