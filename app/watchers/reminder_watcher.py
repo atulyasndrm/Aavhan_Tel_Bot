@@ -7,18 +7,19 @@ async def reminder_loop(app):
     print("⏰ Reminder system started...")
 
     while True:
-        now = datetime.utcnow()
+        # Use local time to match the time saved by your /create_job handler
+        now = datetime.now() 
 
         async with db_pool.acquire() as conn:
             jobs = await conn.fetch("SELECT * FROM jobs WHERE status = 'assigned'")
             
         for job in jobs:
+            job_time = job.get("datetime")
 
-            # ✅ safety (avoid crash)
-            if "datetime" not in job:
+            # ✅ safety (avoid crash if datetime is NULL)
+            if not job_time:
                 continue
 
-            job_time = job["datetime"]
             priest_id = job.get("assigned_priest")
 
             if not priest_id:
@@ -66,8 +67,8 @@ def format_datetime(dt):
 
 async def send_reminder(app, user_id, job, tag):
     try:
-        now = datetime.utcnow()
-        job_time = job["datetime"]
+        now = datetime.now()
+        job_time = job.get("datetime")
 
         diff = (job_time - now).total_seconds()
         time_left = format_time_left(diff)
