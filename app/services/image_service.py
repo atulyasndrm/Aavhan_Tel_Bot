@@ -1,10 +1,30 @@
 import os
 from PIL import Image, ImageDraw, ImageFont
 import io
+import urllib.request
+import tempfile
 
 # Get the absolute path to the project root (2 levels up from app/services/image_service.py)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CUSTOM_FONT_PATH = os.path.join(BASE_DIR, "assets", "custom_font.ttf")
+FALLBACK_FONT_PATH = os.path.join(tempfile.gettempdir(), "Roboto-Regular.ttf")
+
+def get_font(size):
+    """Helper to reliably load a TrueType font, downloading a fallback if necessary."""
+    try:
+        return ImageFont.truetype(CUSTOM_FONT_PATH, size)
+    except IOError:
+        if not os.path.exists(FALLBACK_FONT_PATH):
+            try:
+                # Download Google's Roboto font dynamically if no local font is found
+                url = "https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Regular.ttf"
+                urllib.request.urlretrieve(url, FALLBACK_FONT_PATH)
+            except Exception as e:
+                print(f"Font download failed: {e}")
+        try:
+            return ImageFont.truetype(FALLBACK_FONT_PATH, size)
+        except IOError:
+            return ImageFont.load_default()
 
 def generate_job_image(job, theme="default"):
     # Dimensions and "Pavitra" Colors
@@ -42,21 +62,11 @@ def generate_job_image(job, theme="default"):
     # 2. Header with Traditional Flare
     draw.rectangle([15, 15, 785, 140], fill=deep_color)
     
-    try:
-        # Try to load the custom bundled font first
-        font_header = ImageFont.truetype(CUSTOM_FONT_PATH, 48) 
-        font_label = ImageFont.truetype(CUSTOM_FONT_PATH, 22)
-        font_value = ImageFont.truetype(CUSTOM_FONT_PATH, 34)
-        font_dakshina = ImageFont.truetype(CUSTOM_FONT_PATH, 42)
-    except IOError:
-        # Fallback to system fonts if the custom font file is missing
-        try:
-            font_header = ImageFont.truetype("DejaVuSans-Bold.ttf", 48)
-            font_label = ImageFont.truetype("DejaVuSans.ttf", 22)
-            font_value = ImageFont.truetype("DejaVuSans-Bold.ttf", 34)
-            font_dakshina = ImageFont.truetype("DejaVuSans-Bold.ttf", 42)
-        except IOError:
-                font_header = font_label = font_value = font_dakshina = ImageFont.load_default()
+    # Load fonts using the robust helper
+    font_header = get_font(48)
+    font_label = get_font(22)
+    font_value = get_font(34)
+    font_dakshina = get_font(42)
 
     # Header Text
     draw.text((width//2, 75), header_text, font=font_header, fill="#FFFFFF", anchor="mm")
