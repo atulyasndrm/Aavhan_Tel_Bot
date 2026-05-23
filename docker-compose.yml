@@ -1,38 +1,11 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: aavhan_postgres
-    restart: always
-    environment:
-      POSTGRES_USER: aavhan_user
-      POSTGRES_PASSWORD: aavhan_password
-      POSTGRES_DB: aavhan_db
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
   bot:
     build: .
     container_name: aavhan_bot
     restart: always
     env_file:
       - .env
-    depends_on:
-      - db
-
-  caddy:
-    image: caddy:2-alpine
-    container_name: aavhan_caddy
-    restart: always
     ports:
-      - "80:80"
-      - "443:443"
-    # NOTE: Replace "your-domain.com" with your actual domain below!
-    command: caddy reverse-proxy --from https://your-domain.com --to http://bot:8000
-    depends_on:
-      - bot
-
-volumes:
-  pgdata:
       - "127.0.0.1:8000:8000"
