@@ -42,11 +42,17 @@ async def list_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         image_bytes = generate_job_image(job)
 
+        city = job.get('city') or ''
+        state = job.get('state') or ''
+        city_state = f"{city}, {state}".strip(', ').strip()
+        location = city_state if city_state else (job.get('location') or 'N/A')
+        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+
         text = (
-            f"📿 <b>{job['title']}</b>\n"
-            f"<b>Location:</b> {job['location']}\n"
-            f"<b>Date & Time:</b> {job.get('date', 'N/A')} {job.get('time', 'N/A')}\n"
-            f"<b>Dakshina:</b> ₹{job.get('fees', 'N/A')}"
+            f"📿 <b>{title}</b>\n"
+            f"<b>Location:</b> {location}\n"
+            f"<b>Date & Time:</b> {job.get('date') or 'N/A'} {job.get('time') or 'N/A'}\n"
+            f"<b>Dakshina:</b> ₹{job.get('fees') or 'N/A'}"
         )
 
         await update.message.reply_photo(
@@ -87,11 +93,17 @@ async def list_applied_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         image_bytes = generate_job_image(job, theme="green")
 
+        city = job.get('city') or ''
+        state = job.get('state') or ''
+        city_state = f"{city}, {state}".strip(', ').strip()
+        location = city_state if city_state else (job.get('location') or 'N/A')
+        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+
         text = (
-            f"✅ <b>{job['title']}</b>\n"
-            f"<b>Location:</b> {job['location']}\n"
-            f"<b>Date & Time:</b> {job.get('date', 'N/A')} {job.get('time', 'N/A')}\n"
-            f"<b>Dakshina:</b> ₹{job.get('fees', 'N/A')}\n"
+            f"✅ <b>{title}</b>\n"
+            f"<b>Location:</b> {location}\n"
+            f"<b>Date & Time:</b> {job.get('date') or 'N/A'} {job.get('time') or 'N/A'}\n"
+            f"<b>Dakshina:</b> ₹{job.get('fees') or 'N/A'}\n"
             f"<b>Status:</b> {job.get('status', 'assigned').capitalize()}"
         )
         await update.message.reply_photo(photo=image_bytes, caption=text, reply_markup=keyboard, parse_mode="HTML")
@@ -126,12 +138,18 @@ async def list_rejected_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE)
         ])
 
         image_bytes = generate_job_image(job, theme="red")
+        
+        city = job.get('city') or ''
+        state = job.get('state') or ''
+        city_state = f"{city}, {state}".strip(', ').strip()
+        location = city_state if city_state else (job.get('location') or 'N/A')
+        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
 
         text = (
-            f"❌ <b>{job['title']}</b>\n"
-            f"<b>Location:</b> {job['location']}\n"
-            f"<b>Date & Time:</b> {job.get('date', 'N/A')} {job.get('time', 'N/A')}\n"
-            f"<b>Dakshina:</b> ₹{job.get('fees', 'N/A')}"
+            f"❌ <b>{title}</b>\n"
+            f"<b>Location:</b> {location}\n"
+            f"<b>Date & Time:</b> {job.get('date') or 'N/A'} {job.get('time') or 'N/A'}\n"
+            f"<b>Dakshina:</b> ₹{job.get('fees') or 'N/A'}"
         )
         await update.message.reply_photo(photo=image_bytes, caption=text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -154,10 +172,17 @@ async def list_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     for job in jobs[:5]:
         image_bytes = generate_job_image(job, theme="green")
+        
+        city = job.get('city') or ''
+        state = job.get('state') or ''
+        city_state = f"{city}, {state}".strip(', ').strip()
+        location = city_state if city_state else (job.get('location') or 'N/A')
+        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+        
         text = (
-            f"🎉 <b>{job['title']}</b>\n"
-            f"<b>Location:</b> {job['location']}\n"
-            f"<b>Date & Time:</b> {job.get('date', 'N/A')} {job.get('time', 'N/A')}\n"
-            f"<b>Dakshina:</b> ₹{job.get('fees', 'N/A')}"
+            f"🎉 <b>{title}</b>\n"
+            f"<b>Location:</b> {location}\n"
+            f"<b>Date & Time:</b> {job.get('date') or 'N/A'} {job.get('time') or 'N/A'}\n"
+            f"<b>Dakshina:</b> ₹{job.get('fees') or 'N/A'}"
         )
         await update.message.reply_photo(photo=image_bytes, caption=text, parse_mode="HTML")
