@@ -9,42 +9,45 @@ async def reminder_loop(app):
     logger.info("Reminder system started")
 
     while True:
-        # Use local time to match the time saved by your /create_job handler
-        now = datetime.now() 
+        try:
+            # Use local time to match the time saved by your /create_job handler
+            now = datetime.now() 
 
-        async with db_pool.acquire() as conn:
-            jobs = await conn.fetch("SELECT * FROM bookings WHERE status = 'assigned'")
-            
-        for job in jobs:
-            job_time = job.get("datetime")
-
-            # ✅ safety (avoid crash if datetime is NULL)
-            if not job_time:
-                continue
-
-            priest_id = job.get("assigned_priest")
-
-            if not priest_id:
-                continue
-
-            diff = (job_time - now).total_seconds()
-
-            # skip past jobs
-            if diff <= 0:
-                continue
+            async with db_pool.acquire() as conn:
+                jobs = await conn.fetch("SELECT * FROM bookings WHERE status = 'assigned'")
                 
-            sent = job.get("reminders_sent") or []
+            for job in jobs:
+                job_time = job.get("datetime")
 
-            # Trigger only the most urgent reminder & cascade skip the older ones
-            if diff <= 3600:
-                if "1h" not in sent:
-                    await send_reminder(app, priest_id, job, "1h")
-            elif diff <= 7200:
-                if "2h" not in sent:
-                    await send_reminder(app, priest_id, job, "2h")
-            elif diff <= 86400:
-                if "24h" not in sent:
-                    await send_reminder(app, priest_id, job, "24h")
+                # ✅ safety (avoid crash if datetime is NULL)
+                if not job_time:
+                    continue
+
+                priest_id = job.get("assigned_priest")
+
+                if not priest_id:
+                    continue
+
+                diff = (job_time - now).total_seconds()
+
+                # skip past jobs
+                if diff <= 0:
+                    continue
+                    
+                sent = job.get("reminders_sent") or []
+
+                # Trigger only the most urgent reminder & cascade skip the older ones
+                if diff <= 3600:
+                    if "1h" not in sent:
+                        await send_reminder(app, priest_id, job, "1h")
+                elif diff <= 7200:
+                    if "2h" not in sent:
+                        await send_reminder(app, priest_id, job, "2h")
+                elif diff <= 86400:
+                    if "24h" not in sent:
+                        await send_reminder(app, priest_id, job, "24h")
+        except Exception as e:
+            logger.error("Error in reminder loop: %s", e)
 
         await asyncio.sleep(60)
 
