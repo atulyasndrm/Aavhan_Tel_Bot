@@ -24,7 +24,13 @@ async def broadcast_job(app, job):
     location = city_state if city_state else (job.get('location') or 'N/A')
     
     samagri_val = str(job.get('samagri') or '').lower()
-    samagri = "Pandit Will Bring" if 'pandit' in samagri_val else "Yajman Will Arrange" if 'self' in samagri_val else "To be discussed"
+    if 'pandit' in samagri_val:
+        samagri = "Pandit Will Bring"
+    elif 'yajman' in samagri_val or 'self' in samagri_val:
+        samagri = "Yajman Will Arrange"
+    else:
+        samagri = str(job.get('samagri') or 'To be discussed')
+        
     dakshina = f"₹ {job.get('fees')}" if job.get('fees') else "To be discussed"
     notes = f"\n\n<i>Note: {job.get('notes')}</i>" if job.get('notes') else ""
 

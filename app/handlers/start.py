@@ -41,14 +41,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Build the main menu keyboard
     if user.id == int(ADMIN_ID):
         keyboard = [
-            [KeyboardButton("/create_job"), KeyboardButton("/admin_jobs")],
-            [KeyboardButton("/broadcast"), KeyboardButton("/help")]
+            [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
+            [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],
+            [KeyboardButton("/help")]
         ]
     else:
         keyboard = [
-            [KeyboardButton("/jobs"), KeyboardButton("/applied")],
-            [KeyboardButton("/rejected"), KeyboardButton("/history")],
-            [KeyboardButton("/help")]
+            [KeyboardButton("📿 Open Jobs"), KeyboardButton("✅ Applied")],
+            [KeyboardButton("❌ Rejected"), KeyboardButton("📜 History")],
+            [KeyboardButton("✏️ Edit Profile"), KeyboardButton("/help")]
         ]
         
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

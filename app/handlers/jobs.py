@@ -2,6 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import Update
 from telegram.ext import ContextTypes
 
+
 from app.services.job_service import get_available_jobs, get_applied_jobs, get_rejected_jobs, get_completed_jobs
 from app.middleware.auth import is_verified
 from app.services.image_service import generate_job_image
@@ -46,10 +47,7 @@ async def list_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         state = job.get('state') or ''
         city_state = f"{city}, {state}".strip(', ').strip()
         location = city_state if city_state else (job.get('location') or 'N/A')
-        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
-        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
-        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
-        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
 
         text = (
             f"📿 <b>{title}</b>\n"
@@ -109,7 +107,7 @@ async def list_applied_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         state = job.get('state') or ''
         city_state = f"{city}, {state}".strip(', ').strip()
         location = city_state if city_state else (job.get('location') or 'N/A')
-        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
 
         text = (
             f"✅ <b>{title}</b>\n"
@@ -155,7 +153,7 @@ async def list_rejected_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE)
         state = job.get('state') or ''
         city_state = f"{city}, {state}".strip(', ').strip()
         location = city_state if city_state else (job.get('location') or 'N/A')
-        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
 
         text = (
             f"❌ <b>{title}</b>\n"
@@ -189,7 +187,7 @@ async def list_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         state = job.get('state') or ''
         city_state = f"{city}, {state}".strip(', ').strip()
         location = city_state if city_state else (job.get('location') or 'N/A')
-        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
         
         text = (
             f"🎉 <b>{title}</b>\n"

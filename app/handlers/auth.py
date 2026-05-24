@@ -33,6 +33,30 @@ async def start_verification(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return NAME
 
 
+#===== EDIT PROFILE =====
+async def edit_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    
+    async with db_pool.acquire() as conn:
+        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+    
+    if not existing:
+        await update.message.reply_text("❌ You are not registered yet. Please type /verify to start.")
+        return ConversationHandler.END
+        
+    # Pre-fill user data from the database
+    context.user_data["name"] = existing.get("name", "")
+    context.user_data["phone"] = existing.get("phone", "")
+    context.user_data["document"] = existing.get("document", "")
+    context.user_data["doc_type"] = existing.get("doc_type", "document")
+    
+    await update.message.reply_text(
+        "⚠️ *Note:* Editing your profile will temporarily suspend your verified status and resubmit it for Admin approval.",
+        parse_mode="Markdown"
+    )
+    
+    return await show_confirmation(update, context)
+
 
 #===== STEP 1 : NAME =====
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -198,13 +222,14 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO users (id, name, phone, role, verified, verification_status, document, created_at, updated_at)
-            VALUES ($1, $2, $3, 'priest', FALSE, 'pending', $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO users (id, name, phone, role, verified, verification_status, document, doc_type, created_at, updated_at)
+            VALUES ($1, $2, $3, 'priest', FALSE, 'pending', $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ON CONFLICT (id) DO UPDATE SET 
             name = EXCLUDED.name, phone = EXCLUDED.phone, 
             verified = FALSE, verification_status = 'pending', document = EXCLUDED.document,
+            doc_type = EXCLUDED.doc_type,
             updated_at = CURRENT_TIMESTAMP
-        """, user.id, data["name"], data["phone"], data["document"])
+        """, user.id, data["name"], data["phone"], data["document"], data["doc_type"])
     
     await update.message.reply_text(
         "✅ Submitted! Waiting for admin approval.",

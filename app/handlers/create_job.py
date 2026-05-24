@@ -119,8 +119,9 @@ async def get_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Restore admin keyboard
     keyboard = [
-        [KeyboardButton("/create_job"), KeyboardButton("/admin_jobs")],
-        [KeyboardButton("/broadcast"), KeyboardButton("/help")]
+        [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
+        [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],
+        [KeyboardButton("/help")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -136,8 +137,9 @@ async def get_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def cancel_creation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [KeyboardButton("/create_job"), KeyboardButton("/admin_jobs")],
-        [KeyboardButton("/broadcast"), KeyboardButton("/help")]
+        [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
+        [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],
+        [KeyboardButton("/help")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text("❌ Job creation cancelled.", reply_markup=reply_markup)
@@ -145,7 +147,10 @@ async def cancel_creation(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 create_job_conv = ConversationHandler(
-    entry_points=[CommandHandler("create_job", start_job_creation)],
+    entry_points=[
+        CommandHandler("create_job", start_job_creation),
+        MessageHandler(filters.Regex("^➕ Create Job$"), start_job_creation)
+    ],
     states={
         TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_title)],
         DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],

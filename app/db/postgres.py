@@ -30,6 +30,7 @@ async def init_db():
                 verification_status TEXT DEFAULT 'pending',
                 verified BOOLEAN DEFAULT FALSE,
                 document TEXT,
+                doc_type TEXT DEFAULT 'document',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -100,6 +101,7 @@ async def init_db():
             
             ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
             ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS doc_type TEXT DEFAULT 'document';
         """)
         
         # Create Trigger for LISTEN/NOTIFY (Replaces MongoDB Change Streams)

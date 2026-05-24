@@ -10,14 +10,16 @@ async def help_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
     if user_id == int(ADMIN_ID):
         admin_text = (
             "<b>👑 Admin Commands:</b>\n\n"
-            "/create_job - Create and broadcast a new Puja job\n"
-            "/admin_jobs - Open the admin job dashboard\n"
-            "/broadcast &lt;message&gt; - Send an announcement to all verified priests\n"
+            "➕ <b>Create Job</b> - Create and broadcast a new Puja job\n"
+            "📋 <b>Admin Jobs</b> - Open the admin job dashboard\n"
+            "📢 <b>Broadcast</b> - Send an announcement to all verified priests\n"
+            "🔍 <b>Find Priest</b> - Search for a priest by name/phone/id\n"
             "/help - Show this menu"
         )
         keyboard = [
-            [KeyboardButton("/create_job"), KeyboardButton("/admin_jobs")],
-            [KeyboardButton("/broadcast"), KeyboardButton("/help")]
+            [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
+            [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],
+            [KeyboardButton("/help")]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         await update.message.reply_text(admin_text, reply_markup=reply_markup, parse_mode="HTML")
@@ -25,16 +27,17 @@ async def help_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
     else:
         user_text = (
             "<b>🙏 Priest Commands:</b>\n\n"
-            "/jobs - List available open Aavhans\n"
-            "/applied - View your confirmed bookings\n"
-            "/rejected - View your rejected jobs\n"
-            "/history - View your past completed jobs\n"
+            "📿 <b>Open Jobs</b> - List available open Aavhans\n"
+            "✅ <b>Applied</b> - View your confirmed bookings\n"
+            "❌ <b>Rejected</b> - View your rejected jobs\n"
+            "📜 <b>History</b> - View your past completed jobs\n"
+            "✏️ <b>Edit Profile</b> - Update your phone number or ID\n"
             "/help - Show this menu"
         )
         keyboard = [
-            [KeyboardButton("/jobs"), KeyboardButton("/applied")],
-            [KeyboardButton("/rejected"), KeyboardButton("/history")],
-            [KeyboardButton("/help")]
+            [KeyboardButton("📿 Open Jobs"), KeyboardButton("✅ Applied")],
+            [KeyboardButton("❌ Rejected"), KeyboardButton("📜 History")],
+            [KeyboardButton("✏️ Edit Profile"), KeyboardButton("/help")]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         await update.message.reply_text(user_text, reply_markup=reply_markup, parse_mode="HTML")

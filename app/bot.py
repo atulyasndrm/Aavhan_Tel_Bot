@@ -11,7 +11,11 @@ from config import BOT_TOKEN
 
 # handlers
 from app.handlers.start import start
-from app.handlers.admin import admin_callback, admin_broadcast
+from app.handlers.admin import (
+    admin_callback, find_priest_callback,
+    find_priest_start, find_priest_process, cancel_search, SEARCH_QUERY,
+    broadcast_start, broadcast_process, cancel_broadcast, BROADCAST_MESSAGE
+)
 from app.services.admin_jobs import admin_jobs_menu, admin_jobs_callback
 from app.handlers.jobs import list_jobs, list_applied_jobs, list_rejected_jobs, list_history
 from app.handlers.job_actions import job_callback
@@ -19,6 +23,7 @@ from app.handlers.help import help_command
 
 from app.handlers.auth import (
     start_verification,
+    edit_profile,
     get_name,
     get_phone,
     get_document,
@@ -39,7 +44,9 @@ def create_bot():
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler("verify", start_verification),
-            CommandHandler("start", start)
+            CommandHandler("start", start),
+            CommandHandler("edit_profile", edit_profile),
+            MessageHandler(filters.Regex("^✏️ Edit Profile$"), edit_profile)
         ],
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
@@ -55,11 +62,42 @@ def create_bot():
     # ===== Commands =====
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("jobs", list_jobs))
+    app.add_handler(MessageHandler(filters.Regex("^📿 Open Jobs$"), list_jobs))
     app.add_handler(CommandHandler("applied", list_applied_jobs))
+    app.add_handler(MessageHandler(filters.Regex("^✅ Applied$"), list_applied_jobs))
     app.add_handler(CommandHandler("rejected", list_rejected_jobs))
+    app.add_handler(MessageHandler(filters.Regex("^❌ Rejected$"), list_rejected_jobs))
     app.add_handler(CommandHandler("history", list_history))
+    app.add_handler(MessageHandler(filters.Regex("^📜 History$"), list_history))
     app.add_handler(CommandHandler("admin_jobs", admin_jobs_menu))
-    app.add_handler(CommandHandler("broadcast", admin_broadcast))
+    app.add_handler(MessageHandler(filters.Regex("^📋 Admin Jobs$"), admin_jobs_menu))
+    
+    # Interactive Broadcast Handler
+    broadcast_conv = ConversationHandler(
+        entry_points=[
+            CommandHandler("broadcast", broadcast_start),
+            MessageHandler(filters.Regex("^📢 Broadcast$"), broadcast_start)
+        ],
+        states={
+            BROADCAST_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, broadcast_process)]
+        },
+        fallbacks=[CommandHandler("cancel", cancel_broadcast)]
+    )
+    app.add_handler(broadcast_conv)
+    
+    # Interactive Find Priest Handler
+    find_priest_conv = ConversationHandler(
+        entry_points=[
+            CommandHandler("find_priest", find_priest_start),
+            MessageHandler(filters.Regex("^🔍 Find Priest$"), find_priest_start)
+        ],
+        states={
+            SEARCH_QUERY: [MessageHandler(filters.TEXT & ~filters.COMMAND, find_priest_process)]
+        },
+        fallbacks=[CommandHandler("cancel", cancel_search)]
+    )
+    app.add_handler(find_priest_conv)
+    
     app.add_handler(conv_handler)
 
     # ===== Callback handlers (FIXED) =====
@@ -81,6 +119,13 @@ def create_bot():
         CallbackQueryHandler(
             job_callback,
             pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_|more_jobs_)"
+        )
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(
+            find_priest_callback,
+            pattern="^(spr_|sa_|sr_|srr_)"
         )
     )
 
