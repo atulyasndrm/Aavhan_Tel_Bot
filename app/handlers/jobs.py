@@ -1,3 +1,4 @@
+import urllib.parse
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -91,9 +92,22 @@ async def list_applied_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     jobs = jobs[:5]
 
     for job in jobs:
+        city = job.get('city') or ''
+        state = job.get('state') or ''
+        city_state = f"{city}, {state}".strip(', ').strip()
+        location = city_state if city_state else (job.get('location') or 'N/A')
+        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
+        
+        encoded_loc = urllib.parse.quote(location)
+        maps_url = f"https://www.google.com/maps/search/?api=1&query={encoded_loc}"
+
         buttons = []
         if job.get('status', 'assigned') == 'assigned':
             buttons = [
+                [
+                    InlineKeyboardButton("🚗 Navigate", url=maps_url),
+                    InlineKeyboardButton("📅 Add to Calendar", callback_data=f"calendar_job_{job['id']}")
+                ],
                 [
                     InlineKeyboardButton("✅ Mark Completed", callback_data=f"complete_job_{job['id']}"),
                     InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_job_{job['id']}")
@@ -102,12 +116,6 @@ async def list_applied_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = InlineKeyboardMarkup(buttons) if buttons else None
 
         image_bytes = generate_job_image(job, theme="green")
-
-        city = job.get('city') or ''
-        state = job.get('state') or ''
-        city_state = f"{city}, {state}".strip(', ').strip()
-        location = city_state if city_state else (job.get('location') or 'N/A')
-        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
 
         text = (
             f"✅ <b>{title}</b>\n"

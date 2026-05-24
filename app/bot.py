@@ -24,6 +24,7 @@ from app.handlers.help import help_command
 from app.handlers.auth import (
     start_verification,
     edit_profile,
+    send_portfolio,
     get_name,
     get_phone,
     get_document,
@@ -99,6 +100,7 @@ def create_bot():
     app.add_handler(find_priest_conv)
     
     app.add_handler(conv_handler)
+    app.add_handler(MessageHandler(filters.Regex("^🪪 My Portfolio$"), send_portfolio))
 
     # ===== Callback handlers (FIXED) =====
     app.add_handler(
@@ -118,7 +120,7 @@ def create_bot():
     app.add_handler(
         CallbackQueryHandler(
             job_callback,
-            pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_|more_jobs_)"
+            pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_|more_jobs_|calendar_job_)"
         )
     )
 

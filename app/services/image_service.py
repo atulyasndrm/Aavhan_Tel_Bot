@@ -145,3 +145,55 @@ def generate_job_image(job, theme="default"):
     img.save(bio, format="PNG", optimize=True)
     bio.seek(0)
     return bio.getvalue()
+
+
+# ============================================================
+# PRIEST PORTFOLIO / BUSINESS CARD
+# ============================================================
+
+def generate_portfolio_card(user, completed_count):
+    width, height = 1080, 640
+    img = Image.new("RGB", (width, height), "#FFF9F2")
+    draw = ImageDraw.Draw(img)
+    
+    # Draw outer border and header
+    draw.rectangle([0, 0, width, height], outline="#F97316", width=15)
+    draw.rectangle([0, 0, width, 140], fill="#F97316")
+    
+    # Fonts
+    header_font = load_font(50, bold=True)
+    name_font = load_font(70, bold=True)
+    text_font = load_font(38)
+    badge_font = load_font(32, bold=True)
+    
+    # Header Text
+    draw.text((width // 2, 70), "AAVHAN VERIFIED PANDIT", font=header_font, fill="white", anchor="mm")
+    
+    # User Details
+    name = str(user.get("name") or "Pandit Ji").upper()
+    phone = str(user.get("phone") or "N/A")
+    pid = str(user.get("id"))
+    
+    created_val = user.get("created_at")
+    joined = created_val.strftime('%B %Y') if created_val else "N/A"
+    
+    # Write Content
+    draw.text((80, 200), name, font=name_font, fill="#111827")
+    draw.text((80, 310), f"Priest ID:   {pid}", font=text_font, fill="#4B5563")
+    draw.text((80, 380), f"Contact:     {phone}", font=text_font, fill="#4B5563")
+    draw.text((80, 450), f"Joined:        {joined}", font=text_font, fill="#4B5563")
+    
+    # Draw Badges (Rounded Pills)
+    # Verified Badge
+    draw.rounded_rectangle([80, 520, 380, 590], radius=35, fill="#ECFCCB", outline="#22C55E", width=4)
+    draw.text((230, 555), "✅ VERIFIED", font=badge_font, fill="#166534", anchor="mm")
+    
+    # Completed Pujas Badge
+    draw.rounded_rectangle([410, 520, 1000, 590], radius=35, fill="#FFF7ED", outline="#F97316", width=4)
+    draw.text((705, 555), f"🌟 {completed_count} PUJAS COMPLETED", font=badge_font, fill="#9A3412", anchor="mm")
+    
+    # Export
+    bio = io.BytesIO()
+    img.save(bio, format="PNG", optimize=True)
+    bio.seek(0)
+    return bio.getvalue()

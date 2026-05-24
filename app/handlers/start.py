@@ -49,7 +49,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [KeyboardButton("📿 Open Jobs"), KeyboardButton("✅ Applied")],
             [KeyboardButton("❌ Rejected"), KeyboardButton("📜 History")],
-            [KeyboardButton("✏️ Edit Profile"), KeyboardButton("/help")]
+            [KeyboardButton("🪪 My Portfolio"), KeyboardButton("✏️ Edit Profile")],
+            [KeyboardButton("/help")]
         ]
         
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)

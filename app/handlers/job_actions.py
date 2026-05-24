@@ -1,3 +1,5 @@
+import io
+from datetime import timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from app.services.conflict_service import has_conflict
@@ -262,3 +264,36 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.exception("Error notifying admin about completion")
         else:
             await edit_reply("❌ Could not complete the job. It may already be completed or reassigned.")
+
+    # ===== ADD TO CALENDAR =====
+    elif data.startswith("calendar_job_"):
+        job_id = data.split("_")[2]
+
+        async with db_pool.acquire() as conn:
+            job = await conn.fetchrow("SELECT * FROM bookings WHERE id = $1::uuid", job_id)
+
+        if not job:
+            return
+
+        dtstart = job.get('datetime')
+        if not dtstart:
+            return
+
+        title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
+        location = job.get('location') or 'Yajman House'
+        # Assume a standard 3-hour duration for the calendar event
+        dtend = dtstart + timedelta(hours=3)
+        fmt = "%Y%m%dT%H%M%S"
+
+        ics_content = f"BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Aavhan//Bot//EN\nBEGIN:VEVENT\nSUMMARY:{title}\nDTSTART:{dtstart.strftime(fmt)}\nDTEND:{dtend.strftime(fmt)}\nLOCATION:{location}\nDESCRIPTION:Dakshina: {job.get('fees', 'TBD')}\\nSamagri: {job.get('samagri', 'TBD')}\nEND:VEVENT\nEND:VCALENDAR"
+        
+        ics_file = io.BytesIO(ics_content.encode('utf-8'))
+        safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '_')).rstrip()
+        filename = f"{safe_title.replace(' ', '_')}.ics"
+
+        await context.bot.send_document(
+            chat_id=user_id,
+            document=ics_file,
+            filename=filename,
+            caption="📅 Open this file to instantly add the Puja to your phone's calendar!"
+        )

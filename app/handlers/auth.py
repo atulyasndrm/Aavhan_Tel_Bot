@@ -58,6 +58,36 @@ async def edit_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await show_confirmation(update, context)
 
 
+#===== MY PORTFOLIO =====
+async def send_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    
+    async with db_pool.acquire() as conn:
+        db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        
+        if not db_user or not db_user.get("verified"):
+            await update.message.reply_text("⛔ You must be a verified priest to view your portfolio.")
+            return
+            
+        completed_count = await conn.fetchval("""
+            SELECT COUNT(*) FROM bookings 
+            WHERE assigned_priest = $1 AND status = 'completed'
+        """, user.id)
+        
+    from app.services.image_service import generate_portfolio_card
+    image_bytes = generate_portfolio_card(db_user, completed_count)
+    
+    await update.message.reply_photo(
+        photo=image_bytes,
+        caption=(
+            "🪪 *Your Verified Digital Business Card*\n\n"
+            "You can forward this image to your private Yajmans (hosts) "
+            "on WhatsApp or Telegram to showcase your verified experience and build trust!"
+        ),
+        parse_mode="Markdown"
+    )
+
+
 #===== STEP 1 : NAME =====
 async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
