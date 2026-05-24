@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from app.db.postgres import db_pool
@@ -34,9 +34,41 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await edit_admin_reply("✅ Approved")
 
-    # ===== REJECT USER =====
+    # ===== REJECT USER (Show Reasons Sub-menu) =====
     elif data.startswith("reject_user_"):
         user_id = int(data.split("_")[2])
+        
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Reason: Blurry/Invalid ID", callback_data=f"reject_reason_{user_id}_blurry")],
+            [InlineKeyboardButton("Reason: Name mismatch", callback_data=f"reject_reason_{user_id}_name")],
+            [InlineKeyboardButton("Reason: Other/Invalid", callback_data=f"reject_reason_{user_id}_other")],
+            [InlineKeyboardButton("⬅️ Cancel & Go Back", callback_data=f"cancel_reject_{user_id}")]
+        ])
+        await query.edit_message_reply_markup(reply_markup=keyboard)
+
+    # ===== CANCEL REJECT (Back to main menu) =====
+    elif data.startswith("cancel_reject_"):
+        user_id = int(data.split("_")[2])
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Approve", callback_data=f"approve_user_{user_id}"),
+                InlineKeyboardButton("❌ Reject", callback_data=f"reject_user_{user_id}")
+            ]
+        ])
+        await query.edit_message_reply_markup(reply_markup=keyboard)
+
+    # ===== EXECUTE REJECTION WITH REASON =====
+    elif data.startswith("reject_reason_"):
+        parts = data.split("_")
+        user_id = int(parts[2])
+        reason_code = parts[3]
+        
+        reasons = {
+            "blurry": "ID document was blurry or unreadable. Please upload a clear photo/scan.",
+            "name": "The name on your profile does not match the provided ID.",
+            "other": "Your application did not meet the verification requirements."
+        }
+        reason_text = reasons.get(reason_code, "Invalid details provided.")
 
         async with db_pool.acquire() as conn:
             await conn.execute("UPDATE users SET verified = FALSE, verification_status = 'rejected' WHERE id = $1", user_id)
@@ -44,12 +76,13 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.send_message(
                 chat_id=user_id,
-                text="❌ Your verification was rejected."
+                text=f"❌ Your verification was rejected.\n\n*Reason:* {reason_text}\n\nYou can type /verify to try again.",
+                parse_mode="Markdown"
             )
         except Exception as e:
             logger.exception("Error sending verification rejected message to user %s", user_id)
 
-        await edit_admin_reply("❌ Rejected")
+        await edit_admin_reply(f"❌ Rejected\nReason: {reason_text}")
 
 
 # ===== ADMIN BROADCAST =====

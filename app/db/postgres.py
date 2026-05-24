@@ -29,7 +29,9 @@ async def init_db():
                 role TEXT DEFAULT 'priest',
                 verification_status TEXT DEFAULT 'pending',
                 verified BOOLEAN DEFAULT FALSE,
-                document TEXT
+                document TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         
@@ -95,6 +97,9 @@ async def init_db():
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS mobile TEXT;
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email TEXT;
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS ceremony_type TEXT;
+            
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
         """)
         
         # Create Trigger for LISTEN/NOTIFY (Replaces MongoDB Change Streams)

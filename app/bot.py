@@ -24,7 +24,10 @@ from app.handlers.auth import (
     get_document,
     NAME,
     PHONE,
-    DOCUMENT
+    DOCUMENT,
+    CONFIRM,
+    confirm_submission,
+    cancel_auth
 )
 from app.handlers.create_job import create_job_conv
 
@@ -40,10 +43,11 @@ def create_bot():
         ],
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
-            PHONE: [MessageHandler(filters.CONTACT, get_phone)],
+            PHONE: [MessageHandler((filters.CONTACT | filters.TEXT) & ~filters.COMMAND, get_phone)],
             DOCUMENT: [MessageHandler(filters.ALL, get_document)],
+            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm_submission)],
         },
-        fallbacks=[],
+        fallbacks=[CommandHandler("cancel", cancel_auth)],
     )
 
     app.add_handler(create_job_conv)
@@ -62,7 +66,7 @@ def create_bot():
     app.add_handler(
         CallbackQueryHandler(
             admin_callback,
-            pattern="^(approve_user_|reject_user_)"
+            pattern="^(approve_user_|reject_user_|reject_reason_|cancel_reject_)"
         )
     )
 
