@@ -1,3 +1,4 @@
+import json
 from app.db.postgres import db_pool
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from app.services.image_service import generate_job_image
@@ -5,13 +6,28 @@ from config import logger
 
 async def broadcast_job(app, job):
     rejected_priests = job.get("rejected_by", []) or []
+    job_datetime = job.get("datetime")
 
-    # Find all verified users who have NOT rejected this job
+    # Find all verified users who have NOT rejected this job and do NOT have a time conflict
     async with db_pool.acquire() as conn:
+        query = "SELECT * FROM users u WHERE u.verified = TRUE"
+        args = []
+        
         if rejected_priests:
-            users = await conn.fetch("SELECT * FROM users WHERE verified = TRUE AND NOT (id = ANY($1::bigint[]))", rejected_priests)
-        else:
-            users = await conn.fetch("SELECT * FROM users WHERE verified = TRUE")
+            args.append(rejected_priests)
+            query += f" AND NOT (u.id = ANY(${len(args)}::bigint[]))"
+            
+        if job_datetime:
+            args.append(job_datetime)
+            query += f""" AND NOT EXISTS (
+                SELECT 1 FROM bookings b
+                WHERE b.assigned_priest = u.id
+                AND b.status = 'assigned'
+                AND b.datetime < (${len(args)}::timestamp + interval '3 hours')
+                AND ${len(args)}::timestamp < (b.datetime + interval '3 hours')
+            )"""
+            
+        users = await conn.fetch(query, *args)
 
     # Generate the custom image dynamically from the job data
     image_bytes = generate_job_image(job)
@@ -34,6 +50,7 @@ async def broadcast_job(app, job):
     dakshina = f"₹ {job.get('fees')}" if job.get('fees') else "To be discussed"
     notes = f"\n\n<i>Note: {job.get('notes')}</i>" if job.get('notes') else ""
 
+    messages_sent = []
     for user in users:
         keyboard = InlineKeyboardMarkup([
             [
@@ -67,9 +84,24 @@ async def broadcast_job(app, job):
                 reply_markup=keyboard
             )
             
+            # Add message info to our list to be saved
+            messages_sent.append({
+                "chat_id": user["id"],
+                "message_id": msg.message_id
+            })
+
             # Cache the uploaded image file_id to send instantly to other priests
             if isinstance(photo_to_send, bytes):
                 photo_to_send = msg.photo[-1].file_id
                 
         except Exception as e:
             logger.exception("Error sending broadcast to %s", user.get('id'))
+
+    # After loop, update the database with all message IDs
+    if messages_sent:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE bookings SET broadcast_messages = $1 WHERE id = $2",
+                json.dumps(messages_sent),
+                job['id']
+            )

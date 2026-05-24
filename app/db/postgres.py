@@ -57,6 +57,7 @@ async def init_db():
                 status TEXT DEFAULT 'open',
                 assigned_priest BIGINT,
                 rejected_by BIGINT[] DEFAULT '{}',
+                broadcast_messages JSONB DEFAULT '[]'::jsonb,
                 reminders_sent TEXT[] DEFAULT '{}',
                 broadcast_status TEXT DEFAULT 'pending',
                 broadcast_attempts INT DEFAULT 0,
@@ -85,6 +86,7 @@ async def init_db():
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS notes TEXT;
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS assigned_priest BIGINT;
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS rejected_by BIGINT[] DEFAULT '{}';
+            ALTER TABLE bookings ADD COLUMN IF NOT EXISTS broadcast_messages JSONB DEFAULT '[]'::jsonb;
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminders_sent TEXT[] DEFAULT '{}';
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS broadcast_status TEXT DEFAULT 'pending';
             ALTER TABLE bookings ADD COLUMN IF NOT EXISTS broadcast_attempts INT DEFAULT 0;

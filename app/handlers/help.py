@@ -30,16 +30,17 @@ async def help_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
             "📿 <b>Open Jobs</b> - List available open Aavhans\n"
             "✅ <b>Applied</b> - View your confirmed bookings\n"
             "❌ <b>Rejected</b> - View your rejected jobs\n"
-            "📜 <b>History</b> - View your past completed jobs\n"
+            "🎉 <b>Completed Jobs</b> - View your past completed jobs\n"
             "🪪 <b>My Portfolio</b> - View your verified digital business card\n"
+            "📥 <b>Download PDF</b> - Download a PDF report of your jobs\n"
             "✏️ <b>Edit Profile</b> - Update your phone number or ID\n"
             "/help - Show this menu"
         )
         keyboard = [
             [KeyboardButton("📿 Open Jobs"), KeyboardButton("✅ Applied")],
-            [KeyboardButton("❌ Rejected"), KeyboardButton("📜 History")],
-            [KeyboardButton("🪪 My Portfolio"), KeyboardButton("✏️ Edit Profile")],
-            [KeyboardButton("/help")]
+            [KeyboardButton("❌ Rejected"), KeyboardButton("🎉 Completed Jobs")],
+            [KeyboardButton("🪪 My Portfolio"), KeyboardButton("📥 Download PDF")],
+            [KeyboardButton("✏️ Edit Profile"), KeyboardButton("/help")]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         await update.message.reply_text(user_text, reply_markup=reply_markup, parse_mode="HTML")

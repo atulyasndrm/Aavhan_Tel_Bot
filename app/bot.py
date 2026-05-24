@@ -17,7 +17,7 @@ from app.handlers.admin import (
     broadcast_start, broadcast_process, cancel_broadcast, BROADCAST_MESSAGE
 )
 from app.services.admin_jobs import admin_jobs_menu, admin_jobs_callback
-from app.handlers.jobs import list_jobs, list_applied_jobs, list_rejected_jobs, list_history
+from app.handlers.jobs import list_jobs, list_applied_jobs, list_rejected_jobs, list_history, download_priest_pdf
 from app.handlers.job_actions import job_callback
 from app.handlers.help import help_command
 
@@ -69,7 +69,8 @@ def create_bot():
     app.add_handler(CommandHandler("rejected", list_rejected_jobs))
     app.add_handler(MessageHandler(filters.Regex("^❌ Rejected$"), list_rejected_jobs))
     app.add_handler(CommandHandler("history", list_history))
-    app.add_handler(MessageHandler(filters.Regex("^📜 History$"), list_history))
+    app.add_handler(MessageHandler(filters.Regex("^🎉 Completed Jobs$"), list_history))
+    app.add_handler(MessageHandler(filters.Regex("^📥 Download PDF$"), download_priest_pdf))
     app.add_handler(CommandHandler("admin_jobs", admin_jobs_menu))
     app.add_handler(MessageHandler(filters.Regex("^📋 Admin Jobs$"), admin_jobs_menu))
     
@@ -120,7 +121,7 @@ def create_bot():
     app.add_handler(
         CallbackQueryHandler(
             job_callback,
-            pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_|more_jobs_|calendar_job_)"
+            pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_|more_jobs_|calendar_job_|more_rejected_|more_applied_|more_history_)"
         )
     )
 

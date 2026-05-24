@@ -76,7 +76,7 @@ def generate_job_image(job, theme="default"):
         },
         "green": {
             "bg": "#F7FBF3",
-            "frame": "#F97316",
+            "frame": "#22C55E",
             "header": "#2E7D32",
             "title": "PUJAN BOOKING",
             "soft": "#166534",
@@ -91,6 +91,15 @@ def generate_job_image(job, theme="default"):
             "soft": "#374151",
             "main": "#111827",
             "accent": "#B91C1C"
+        },
+        "completed": {
+            "bg": "#F5F3FF",
+            "frame": "#8B5CF6",
+            "header": "#4C1D95",
+            "title": "PUJAN COMPLETED",
+            "soft": "#6D28D9",
+            "main": "#111827",
+            "accent": "#4C1D95"
         }
     }
 
@@ -175,7 +184,10 @@ def generate_portfolio_card(user, completed_count):
     pid = str(user.get("id"))
     
     created_val = user.get("created_at")
-    joined = created_val.strftime('%B %Y') if created_val else "N/A"
+    if created_val:
+        joined = created_val if isinstance(created_val, str) else created_val.strftime('%B %Y')
+    else:
+        joined = "N/A"
     
     # Write Content
     draw.text((80, 200), name, font=name_font, fill="#111827")

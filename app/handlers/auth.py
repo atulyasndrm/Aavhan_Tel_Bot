@@ -275,10 +275,39 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # ===== CANCEL VERIFICATION =====
 async def cancel_auth(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "❌ Verification cancelled. You can type /verify later to try again.",
-        reply_markup=ReplyKeyboardRemove()
-    )
+    user = update.effective_user
+    
+    async with db_pool.acquire() as conn:
+        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        
+    context.user_data.clear()
+    
+    if user.id == int(ADMIN_ID):
+        keyboard = [
+            [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
+            [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],
+            [KeyboardButton("/help")]
+        ]
+        await update.message.reply_text(
+            "❌ Action cancelled.",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        )
+    elif existing and existing.get("verified"):
+        keyboard = [
+            [KeyboardButton("📿 Open Jobs"), KeyboardButton("✅ Applied")],
+            [KeyboardButton("❌ Rejected"), KeyboardButton("🎉 Completed Jobs")],
+            [KeyboardButton("🪪 My Portfolio"), KeyboardButton("📥 Download PDF")],
+            [KeyboardButton("✏️ Edit Profile"), KeyboardButton("/help")]
+        ]
+        await update.message.reply_text(
+            "❌ Profile edit cancelled. Your profile remains unchanged.",
+            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        )
+    else:
+        await update.message.reply_text(
+            "❌ Verification cancelled. You can type /verify later to try again.",
+            reply_markup=ReplyKeyboardRemove()
+        )
     return ConversationHandler.END
 
 # ===== ADMIN NOTIFICATION =====

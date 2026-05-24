@@ -210,7 +210,7 @@ async def list_completed_jobs_for_admin(query: CallbackQuery, offset: int):
             priest = await user_service.get_user_details(priest_id)
             priest_info = f"{priest.get('name', 'N/A')} (<code>{priest_id}</code>)" if priest else f"ID: <code>{priest_id}</code>"
 
-        image_bytes = generate_job_image(job, theme="green")
+        image_bytes = generate_job_image(job, theme="completed")
 
         title = job.get('title') or job.get('ceremony_type') or 'Vishesh Puja'
         city_state = f"{job.get('city') or ''}, {job.get('state') or ''}".strip(', ').strip()
