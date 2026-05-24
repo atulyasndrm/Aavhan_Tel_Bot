@@ -1,74 +1,62 @@
-# 🕉️ Aavhan - Priest Booking Telegram Bot
+# 🕉️ Aavhan: Event-Driven Priest Booking Platform
 
-A production-ready Telegram bot that connects verified priests with religious job requests. Built with Python, PostgreSQL, FastAPI, and `python-telegram-bot`.
+[!Python 3.9+](https://www.python.org/downloads/)
+[!FastAPI](https://fastapi.tiangolo.com)
+[!PostgreSQL](https://www.postgresql.org/)
 
----
-
-## ✨ Core Features
-
-### For Priests
-- KYC verification flow with Name, Phone, and Document upload.
-- Receive open jobs as dynamic image cards.
-- Apply, reject, or re-apply directly from Telegram.
-- Interactive menu buttons to view job lists (`📿 Open Jobs`, `✅ Applied`, `❌ Rejected`, and `📜 History`).
-- Edit profile to easily update contact details and ID documents (`✏️ Edit Profile`).
-- Conflict detection to avoid scheduling overlapping work.
-- Reminder notifications for upcoming assignments.
-
-### For Admins
-- Secure admin-only panel via `ADMIN_ID`.
-- Interactive custom keyboards for seamless bot management.
-- Approve or reject priest verification requests.
-- Create and broadcast jobs using the interactive `➕ Create Job` flow.
-- Send announcements to verified priests using `📢 Broadcast`.
-- Search and manage priests by name, phone, or ID using `🔍 Find Priest`.
-- Monitor open, booked, rejected, expired, and completed jobs.
-- View visual **Analytics Dashboards** and **Top Priests Leaderboards**.
-- Generate and download professional PDF reports for Jobs and Priests.
+**Aavhan** is a highly concurrent, asynchronous Telegram bot serving as a two-sided marketplace connecting verified Hindu Priests (Pandits) with devotees (Yajmans). Built for scale, it leverages an event-driven architecture using PostgreSQL `LISTEN/NOTIFY` pub/sub mechanisms, FastAPI, and `python-telegram-bot` to handle real-time job dispatching.
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Platform Capabilities
 
-- Python 3.9+
-- `python-telegram-bot` v20+
-- FastAPI + Uvicorn
-- PostgreSQL + `asyncpg`
-- Pillow for image generation
+### 📿 Priest Interface (Client)
+- **Frictionless Onboarding**: Automated KYC flow with state-machine-driven data collection and ID verification.
+- **Real-Time Dispatch**: Instantaneous job broadcasts via dynamically generated, cached `PIL` image cards.
+- **Atomic Transactions**: Race-condition-free job claiming using row-level database locks (eliminating double-bookings).
+- **Smart Logistics**: One-tap deep-linking for Google Maps navigation and dynamic `.ics` calendar payload generation.
+- **Client Dashboards**: Paginated interfaces for open, applied, and completed jobs, plus on-the-fly PDF portfolio generation.
+
+###  Admin Control Plane (Backoffice)
+- **Role-Based Access Control (RBAC)**: Secure, `ADMIN_ID`-gated command execution and middleware.
+- **Live HUD Dashboard**: Real-time aggregate statistics (Verification Queues, Job States, GMV).
+- **Data Export & Analytics**: Headless, thread-safe visualization generation (`matplotlib`) and tabular PDF reports (`reportlab`).
+- **Entity Management**: Inline approval/rejection workflows, dynamic search filtering, and granular broadcast controls.
 
 ---
 
-## 📁 Project Structure
+## 🏗️ System Architecture
 
-```text
+- **API Layer**: `FastAPI` providing an ASGI interface for potential webhook integration and health checks.
+- **Bot Engine**: `python-telegram-bot` (v20+) running in `async` mode.
+- **Persistence**: `PostgreSQL` accessed via `asyncpg` connection pooling for maximum I/O throughput.
+- **Event Loop**: Background `asyncio` watchers listening to PG triggers (`pg_notify`) to immediately dispatch jobs without polling overhead.
+- **Design Pattern**: Service-Repository pattern (Handlers manage Telegram Context -> Services contain business logic -> DB handles persistence).
+
+---
+
+## 📂 Codebase Topography
+
+```bash
 app/
 ├── db/
-│   └── postgres.py        # PostgreSQL pool and DB access
+│   └── postgres.py        # Connection pooling and schema migrations
 ├── handlers/
-│   ├── admin.py           # Admin verification and approvals
-│   ├── auth.py            # Priest verification flow
-│   ├── create_job.py      # Admin job creation flow
-│   ├── help.py            # Help command handler
-│   ├── job_actions.py     # Callback actions for jobs
-│   ├── jobs.py            # `/jobs`, `/applied`, `/rejected`, `/history`
-│   └── start.py           # Start command and greeting
+│   ├── admin.py           # Verification gating & search interfaces
+│   ├── auth.py            # ConversationHandlers for KYC flow
+│   ├── job_actions.py     # Inline keyboard callback routing
+│   └── ...                # Additional state handlers
 ├── services/
-│   ├── admin_jobs.py      # Admin dashboard logic
-│   ├── broadcast.py       # Job broadcast helpers
-│   ├── conflict_service.py# Scheduling conflict checks
-│   ├── image_service.py   # Job image card generator
-│   ├── job_service.py     # Job queries and pagination
-│   └── user_service.py    # User database queries
+│   ├── analytics_service.py # Headless Matplotlib generation
+│   ├── pdf_service.py       # ReportLab PDF pipeline
+│   ├── conflict_service.py  # Temporal overlap detection
+│   └── image_service.py     # Pillow (PIL) graphic generation
 ├── middleware/
-│   └── auth.py            # Verification gatekeeping
-├── routes/
-│   └── webhook.py         # Webhook route for Telegram
+│   └── auth.py            # Route decorators for verified status
 ├── watchers/
-│   ├── job_watcher.py     # DB watcher for new jobs
-│   └── reminder_watcher.py# Reminder scheduling watcher
-└── bot.py                 # Application builder and handler registration
-config.py                  # Environment config loader
-main.py                    # FastAPI entrypoint
+│   ├── job_watcher.py     # asyncpg LISTEN/NOTIFY daemon
+│   └── reminder_watcher.py# Background chron for Push Notifications
+└── bot.py                 # Application factory and router registry
 ```
 
 ---
