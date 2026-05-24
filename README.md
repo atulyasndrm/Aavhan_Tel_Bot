@@ -1,119 +1,183 @@
 # 🕉️ Aavhan - Priest Booking Telegram Bot
 
-A production-grade Telegram Bot designed to seamlessly connect Yajmans (Hosts) with verified Priests (Pandits) for religious ceremonies and pujas. Built with Python, PostgreSQL, and the `python-telegram-bot` framework.
+A production-ready Telegram bot that connects verified priests with religious job requests. Built with Python, PostgreSQL, FastAPI, and `python-telegram-bot`.
 
 ---
 
-## ✨ Features
+## ✨ Core Features
 
-### 🧑‍⚖️ For Priests (Users)
-- **KYC Verification:** Automated flow to capture Name, Phone Number, and ID/Document proof.
-- **Job Broadcasting:** Instantly receive new Puja Aavhans (job requests) via dynamically generated, beautifully designed image cards.
-- **One-Click Actions:** Accept, Reject, or Re-apply to jobs directly from the Telegram chat.
-- **Smart Scheduling:** Built-in conflict detection prevents double-booking a priest within a 3-hour window.
-- **Automated Reminders:** Get notified 24 hours, 2 hours, and 1 hour before a scheduled Puja.
-- **Job Management:** 
-  - `/jobs` - View available open jobs.
-  - `/applied` - View confirmed/assigned bookings (Green theme).
-  - `/rejected` - View previously rejected jobs (Muted Gray theme) with an option to re-apply.
-  - `/history` - View your past successfully completed jobs.
+### For Priests
+- KYC verification flow with Name, Phone, and Document upload.
+- Receive open jobs as dynamic image cards.
+- Apply, reject, or re-apply directly from Telegram.
+- View job lists with `/jobs`, `/applied`, `/rejected`, and `/history`.
+- Conflict detection to avoid scheduling overlapping work.
+- Reminder notifications for upcoming assignments.
 
-### 👑 For Admins
-- **Secure Access:** Dedicated `/admin_jobs` panel restricted entirely to the configured `ADMIN_ID`.
-- **Verification Management:** Approve or reject KYC documents submitted by new priests.
-- **Job Creation:** Create new jobs interactively using `/create_job`, which automatically generates and broadcasts an invitation image to all verified priests.
-- **Broadcast Messaging:** Send custom text announcements to all verified priests using `/broadcast <message>`.
-- **Job Dashboard:** 
-  - 📬 View all **Open** jobs.
-  - ✅ View **Booked** jobs and instantly see which priest is assigned.
-  - ❌ View **Rejected** jobs and see the list of priests who declined.
-  - 🎉 View **Completed** jobs and review finished pujas.
+### For Admins
+- Secure admin-only panel via `ADMIN_ID`.
+- Approve or reject priest verification requests.
+- Create and broadcast jobs with `/create_job`.
+- Send announcements to verified priests using `/broadcast`.
+- Monitor open, booked, rejected, and completed jobs.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Language:** Python 3.9+
-- **Framework:** `python-telegram-bot` (v20+)
-- **Web Server:** `FastAPI` & `Uvicorn` (for handling Webhooks)
-- **Database:** PostgreSQL (using `asyncpg` for high-performance async queries & `LISTEN/NOTIFY`)
-- **Image Processing:** `Pillow` (PIL) for on-the-fly generation of rich Pujan Invitation cards.
+- Python 3.9+
+- `python-telegram-bot` v20+
+- FastAPI + Uvicorn
+- PostgreSQL + `asyncpg`
+- Pillow for image generation
 
 ---
 
-## 📂 Project Structure
+## 📁 Project Structure
 
 ```text
 app/
 ├── db/
-│   └── postgres.py        # PostgreSQL connection pool and auto-schema generation
+│   └── postgres.py        # PostgreSQL pool and DB access
 ├── handlers/
-│   ├── admin.py           # User approval/rejection handlers
-│   ├── auth.py            # Registration & KYC conversation
-│   ├── create_job.py      # Admin conversation flow to create and broadcast jobs
-│   ├── help.py            # Dynamic help menus
-│   ├── job_actions.py     # Apply, Reject, Cancel, Re-apply logic
-│   ├── jobs.py            # User job listing commands
-│   └── start.py           # Entry point and Keyboard generation
+│   ├── admin.py           # Admin verification and approvals
+│   ├── auth.py            # Priest verification flow
+│   ├── create_job.py      # Admin job creation flow
+│   ├── help.py            # Help command handler
+│   ├── job_actions.py     # Callback actions for jobs
+│   ├── jobs.py            # `/jobs`, `/applied`, `/rejected`, `/history`
+│   └── start.py           # Start command and greeting
 ├── services/
-│   ├── admin_jobs.py      # Admin-only dashboard logic
-│   ├── broadcast.py       # Pushing new jobs to verified priests
-│   ├── conflict_service.py# Time-overlap prevention logic
-│   ├── image_service.py   # Dynamic invitation card generation
-│   ├── job_service.py     # Database queries for jobs
-│   └── user_service.py    # Database queries for users
+│   ├── admin_jobs.py      # Admin dashboard logic
+│   ├── broadcast.py       # Job broadcast helpers
+│   ├── conflict_service.py# Scheduling conflict checks
+│   ├── image_service.py   # Job image card generator
+│   ├── job_service.py     # Job queries and pagination
+│   └── user_service.py    # User database queries
 ├── middleware/
-│   └── auth.py            # Verification checks
+│   └── auth.py            # Verification gatekeeping
 ├── routes/
-│   └── webhook.py         # FastAPI webhook endpoints
+│   └── webhook.py         # Webhook route for Telegram
 ├── watchers/
-│   ├── job_watcher.py     # PostgreSQL LISTEN stream watcher for auto-broadcasts
-│   └── reminder_watcher.py# Background task for upcoming job reminders
-└── bot.py                 # Application builder and route registration
-config.py                  # Environment variables manager
-main.py                    # FastAPI application entry point
+│   ├── job_watcher.py     # DB watcher for new jobs
+│   └── reminder_watcher.py# Reminder scheduling watcher
+└── bot.py                 # Application builder and handler registration
+config.py                  # Environment config loader
+main.py                    # FastAPI entrypoint
 ```
 
 ---
 
-## 🚀 Installation & Setup
+## ✅ Required Files
 
-### 1. Prerequisites
-- Python 3.9 or higher
-- Docker (for spinning up the PostgreSQL database)
-- A Telegram Bot Token (from @BotFather)
+- `config.py`
+- `requirements.txt`
+- `main.py`
+- `Dockerfile`
+- `docker-compose.yml`
+- `.env` or `.env.example`
+- `app/bot.py`
+- `app/routes/webhook.py`
+- `app/db/postgres.py`
+- `app/handlers/*.py`
+- `app/services/*.py`
+- `app/middleware/auth.py`
+- `app/watchers/*.py`
 
-### 2. Clone and Install
+---
+
+## 🚀 Local Setup
+
+### 1. Clone repository
 
 ```bash
-# Clone the repository
 git clone <your-repo-url>
-cd <your-repo-folder>
+cd Aavhan_Tel_Bot
+```
 
-# Create a virtual environment
+### 2. Create virtual environment
+
+```bash
 python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+```
 
-# Install dependencies
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Environment Variables
+### 4. Configure environment
 
-Create a `.env` file in the root of the project and add the following keys:
+Copy `.env.example` to `.env` and set your values:
 
 ```ini
-# .env
-BOT_TOKEN=your_telegram_bot_token_here
-DATABASE_URL=postgresql://aavhan_user:aavhan_password@localhost:5432/aavhan_db
-ADMIN_ID=your_personal_telegram_user_id
+BOT_TOKEN=your_telegram_bot_token
+DATABASE_URL=postgresql://user:password@localhost:5432/aavhan_db
+ADMIN_ID=your_telegram_user_id
 ```
 
-### 4. Run the Bot
+If you are using Neon PostgreSQL, use the Neon connection string and include `sslmode=require`:
+
+```ini
+DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<db>?sslmode=require
+```
+
+### 5. Start PostgreSQL
+
+Use Docker Compose or a local PostgreSQL instance.
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+docker-compose up -d
 ```
-*(Note: Ensure your `main.py` imports and runs the `create_bot()` function from `app.bot`)*
+
+### 6. Run the app locally
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+> In development, you can add `--reload`, but avoid `--reload` in production.
 
 ---
+
+## 🚢 Production Deployment
+
+### Option 1: Docker Compose
+
+```bash
+docker-compose up -d --build
+```
+
+This starts the bot service and database together using the included `Dockerfile` and `docker-compose.yml`.
+
+### Option 2: Direct Uvicorn (production)
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+### Production notes
+
+- Use a dedicated PostgreSQL database and strong credentials.
+- Keep `BOT_TOKEN` and `ADMIN_ID` secret.
+- Use process supervision like `systemd`, `supervisor`, or Docker restart policies.
+- Configure a webhook URL if you want Telegram webhooks instead of polling.
+
+---
+
+## 📌 Notes
+
+- `app/services/image_service.py` generates job cards at runtime.
+- `app/handlers/job_actions.py` handles callback buttons like apply, reject, and pagination (`more_jobs_`).
+- `app/services/job_service.py` supports pagination with `limit` and `offset`.
+
+---
+
+## 📣 Support
+
+For updates or troubleshooting, inspect logs and confirm that `ADMIN_ID` is correct and PostgreSQL is reachable.

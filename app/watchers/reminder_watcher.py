@@ -1,17 +1,19 @@
 import asyncio
+import logging
 from datetime import datetime
 from app.db.postgres import db_pool
+from config import logger
 
 
 async def reminder_loop(app):
-    print("⏰ Reminder system started...")
+    logger.info("Reminder system started")
 
     while True:
         # Use local time to match the time saved by your /create_job handler
         now = datetime.now() 
 
         async with db_pool.acquire() as conn:
-            jobs = await conn.fetch("SELECT * FROM jobs WHERE status = 'assigned'")
+            jobs = await conn.fetch("SELECT * FROM bookings WHERE status = 'assigned'")
             
         for job in jobs:
             job_time = job.get("datetime")
@@ -31,7 +33,7 @@ async def reminder_loop(app):
             if diff <= 0:
                 continue
                 
-            sent = job.get("reminders_sent", [])
+            sent = job.get("reminders_sent") or []
 
             # Trigger only the most urgent reminder & cascade skip the older ones
             if diff <= 3600:
@@ -114,10 +116,10 @@ Time left: {time_left}
             
         async with db_pool.acquire() as conn:
             await conn.execute("""
-                UPDATE jobs 
+                UPDATE bookings 
                 SET reminders_sent = array_cat(reminders_sent, $1::text[]) 
                 WHERE id = $2
             """, tags_to_add, job["id"])
 
     except Exception as e:
-        print("Reminder error:", e)
+        logger.exception("Reminder error")

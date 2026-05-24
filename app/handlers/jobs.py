@@ -17,16 +17,16 @@ async def list_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ Complete verification first.")
         return
 
-    jobs = await get_available_jobs(user.id)
+    jobs = await get_available_jobs(user.id, limit=6, offset=0)
 
     if not jobs:
         await update.message.reply_text("📭 No jobs available.")
         return
 
-    # optional: limit jobs shown
-    jobs = jobs[:5]
+    jobs_to_show = jobs[:5]
+    more_available = len(jobs) > 5
 
-    for job in jobs:
+    for job in jobs_to_show:
         keyboard = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(
@@ -46,7 +46,10 @@ async def list_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         state = job.get('state') or ''
         city_state = f"{city}, {state}".strip(', ').strip()
         location = city_state if city_state else (job.get('location') or 'N/A')
-        title = job.get('title') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
+        title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
 
         text = (
             f"📿 <b>{title}</b>\n"
@@ -60,6 +63,15 @@ async def list_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=text,
             reply_markup=keyboard,
             parse_mode="HTML"
+        )
+
+    if more_available:
+        more_keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("More jobs", callback_data="more_jobs_5")]
+        ])
+        await update.message.reply_text(
+            "📌 More open jobs are available. Show next batch?",
+            reply_markup=more_keyboard
         )
 
 async def list_applied_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE):

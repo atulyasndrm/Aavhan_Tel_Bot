@@ -21,7 +21,7 @@ async def has_conflict(priest_id, job_datetime):
     # Overlap formula: existing_start < new_end AND new_start < existing_end
     async with db_pool.acquire() as conn:
         conflict = await conn.fetchrow("""
-            SELECT id FROM jobs 
+            SELECT id FROM bookings 
             WHERE assigned_priest = $1 AND status = 'assigned'
             AND datetime < $2 
             AND $3 < (datetime + interval '3 hours')

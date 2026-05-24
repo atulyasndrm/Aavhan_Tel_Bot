@@ -1,19 +1,56 @@
-# Environments and Secrets
+# Environments and secrets
 .env
+.env.local
 venv/
 .venv/
 env/
 
-# Byte-compiled / optimized / DLL files
+# Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 
-# IDEs and Editors
+# Distribution / packaging
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.Python
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*.bak
+*.tmp
 
 # OS generated files
 .DS_Store
@@ -26,3 +63,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Temporary sample and generated files
+tmp*.png
+*tmp_sample*.png
+*tmp_sample*.jpg
+*tmp_sample*.jpeg
+*tmp_sample*.gif
+
+dist/
+__pycache__

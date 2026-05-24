@@ -113,7 +113,7 @@ async def get_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Insert into Database (This will automatically trigger the broadcast!)
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO jobs (title, date, time, datetime, location, samagri, fees, status) 
+            INSERT INTO bookings (title, date, time, datetime, location, samagri, fees, status) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'open')
         """, title, date_str, time_str, job_datetime, location, samagri, fees)
 

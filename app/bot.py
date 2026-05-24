@@ -76,7 +76,7 @@ def create_bot():
     app.add_handler(
         CallbackQueryHandler(
             job_callback,
-            pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_)"
+            pattern="^(apply_job_|reject_job_|cancel_job_|reapply_job_|complete_job_|more_jobs_)"
         )
     )
 

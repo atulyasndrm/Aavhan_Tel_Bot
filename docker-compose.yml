@@ -1,11 +1,36 @@
 version: '3.8'
 
 services:
-  bot:
-    build: .
-    container_name: aavhan_bot
+  db:
+    image: postgres:15-alpine
+    container_name: aavhan_db
     restart: always
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: aavhan_user
+      POSTGRES_PASSWORD: aavhan_password
+      POSTGRES_DB: aavhan_db
     ports:
-      - "127.0.0.1:8000:8000"
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: aavhan_app
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - DATABASE_URL=${DATABASE_URL}
+      - ADMIN_ID=${ADMIN_ID}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  postgres_data:

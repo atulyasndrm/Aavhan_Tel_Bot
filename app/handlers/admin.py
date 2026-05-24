@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.db.postgres import db_pool
-from config import ADMIN_ID
+from config import ADMIN_ID, logger
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -30,7 +30,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="🎉 You are VERIFIED! You can now use the bot."
             )
         except Exception as e:
-            print("Send error:", e)
+            logger.exception("Error sending verification approved message to user %s", user_id)
 
         await edit_admin_reply("✅ Approved")
 
@@ -47,7 +47,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="❌ Your verification was rejected."
             )
         except Exception as e:
-            print("Send error:", e)
+            logger.exception("Error sending verification rejected message to user %s", user_id)
 
         await edit_admin_reply("❌ Rejected")
 
@@ -75,6 +75,6 @@ async def admin_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=user["id"], text=full_message, parse_mode="Markdown")
             sent_count += 1
         except Exception as e:
-            print(f"Broadcast error for {user['id']}: {e}")
+            logger.exception("Broadcast error for user %s", user['id'])
 
     await update.message.reply_text(f"✅ Broadcast sent successfully to {sent_count} verified priests.")

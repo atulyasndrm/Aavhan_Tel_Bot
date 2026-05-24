@@ -1,6 +1,7 @@
 from app.db.postgres import db_pool
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from app.services.image_service import generate_job_image
+from config import logger
 
 async def broadcast_job(app, job):
     rejected_priests = job.get("rejected_by", []) or []
@@ -17,12 +18,12 @@ async def broadcast_job(app, job):
     photo_to_send = image_bytes
 
     # Prepare beautiful broadcast text variables natively falling back on old formats
-    title = job.get('title', job.get('ceremonyType', 'Vishesh Puja'))
-    host = job.get('host_name', job.get('fullName', 'Bhakta'))
-    city_state = f"{job.get('city', '')}, {job.get('state', '')}".strip(', ')
-    location = city_state if city_state else job.get('location', 'N/A')
+    title = job.get('title') or job.get('ceremony_type') or job.get('ceremonyType') or 'Vishesh Puja'
+    host = job.get('host_name') or job.get('full_name') or job.get('fullName') or 'Bhakta'
+    city_state = f"{job.get('city') or ''}, {job.get('state') or ''}".strip(', ').strip()
+    location = city_state if city_state else (job.get('location') or 'N/A')
     
-    samagri_val = str(job.get('samagri', '')).lower()
+    samagri_val = str(job.get('samagri') or '').lower()
     samagri = "Pandit Will Bring" if 'pandit' in samagri_val else "Yajman Will Arrange" if 'self' in samagri_val else "To be discussed"
     dakshina = f"₹ {job.get('fees')}" if job.get('fees') else "To be discussed"
     notes = f"\n\n<i>Note: {job.get('notes')}</i>" if job.get('notes') else ""
@@ -65,4 +66,4 @@ async def broadcast_job(app, job):
                 photo_to_send = msg.photo[-1].file_id
                 
         except Exception as e:
-            print(f"Error sending broadcast to {user.get('id')}: {e}")
+            logger.exception("Error sending broadcast to %s", user.get('id'))
