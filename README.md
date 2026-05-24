@@ -10,16 +10,21 @@ A production-ready Telegram bot that connects verified priests with religious jo
 - KYC verification flow with Name, Phone, and Document upload.
 - Receive open jobs as dynamic image cards.
 - Apply, reject, or re-apply directly from Telegram.
-- View job lists with `/jobs`, `/applied`, `/rejected`, and `/history`.
+- Interactive menu buttons to view job lists (`📿 Open Jobs`, `✅ Applied`, `❌ Rejected`, and `📜 History`).
+- Edit profile to easily update contact details and ID documents (`✏️ Edit Profile`).
 - Conflict detection to avoid scheduling overlapping work.
 - Reminder notifications for upcoming assignments.
 
 ### For Admins
 - Secure admin-only panel via `ADMIN_ID`.
+- Interactive custom keyboards for seamless bot management.
 - Approve or reject priest verification requests.
-- Create and broadcast jobs with `/create_job`.
-- Send announcements to verified priests using `/broadcast`.
-- Monitor open, booked, rejected, and completed jobs.
+- Create and broadcast jobs using the interactive `➕ Create Job` flow.
+- Send announcements to verified priests using `📢 Broadcast`.
+- Search and manage priests by name, phone, or ID using `🔍 Find Priest`.
+- Monitor open, booked, rejected, expired, and completed jobs.
+- View visual **Analytics Dashboards** and **Top Priests Leaderboards**.
+- Generate and download professional PDF reports for Jobs and Priests.
 
 ---
 

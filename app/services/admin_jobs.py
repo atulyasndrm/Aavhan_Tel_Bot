@@ -8,23 +8,51 @@ from app.services import job_service, user_service
 from app.services.image_service import generate_job_image
 
 
+async def get_dashboard_summary():
+    """Fetches real-time counts for the admin dashboard HUD."""
+    async with db_pool.acquire() as conn:
+        priests_count = await conn.fetchval("SELECT COUNT(*) FROM users WHERE verified = TRUE")
+        pending_priests = await conn.fetchval("SELECT COUNT(*) FROM users WHERE verification_status = 'pending'")
+        open_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status IN ('open', 'new')")
+        assigned_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status = 'assigned'")
+        completed_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status = 'completed'")
+        
+    pending_text = f"  *(⏳ {pending_priests} pending)*" if pending_priests else ""
+    
+    return (
+        " *Aavhan Master Dashboard*\n\n"
+        " *Live Platform Stats:*\n"
+        f" *Verified Priests:* `{priests_count}`{pending_text}\n"
+        f" *Open Jobs:* `{open_jobs}`\n"
+        f" *Assigned Jobs:* `{assigned_jobs}`\n"
+        f" *Completed Jobs:* `{completed_jobs}`\n\n"
+        " *Select an option below to manage operations:*"
+    )
+
+
+def get_admin_main_keyboard():
+    """Returns the perfectly structured Admin Dashboard keyboard."""
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📊 Analytics Dashboard", callback_data="admin_jobs_analytics")],
+        [InlineKeyboardButton(" Open Jobs", callback_data="admin_jobs_open_0"),
+         InlineKeyboardButton(" Booked Jobs", callback_data="admin_jobs_booked_0")],
+        [InlineKeyboardButton(" Completed Jobs", callback_data="admin_jobs_completed_0"),
+         InlineKeyboardButton(" Rejected Jobs", callback_data="admin_jobs_rejected_0")],
+        [InlineKeyboardButton(" Expired Jobs", callback_data="admin_jobs_expired_0"),
+         InlineKeyboardButton(" Top Priests", callback_data="admin_jobs_leaderboard")],
+        [InlineKeyboardButton(" Jobs Report", callback_data="admin_jobs_pdf_jobs"),
+         InlineKeyboardButton(" Priests Report", callback_data="admin_jobs_pdf_priests")],
+    ])
+
+
 async def admin_jobs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Displays the admin job management menu."""
     if not update.message or update.effective_user.id != int(ADMIN_ID):
         return
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📊 Analytics Dashboard", callback_data="admin_jobs_analytics")],
-        [InlineKeyboardButton("✅ Booked Jobs", callback_data="admin_jobs_booked_0"),
-         InlineKeyboardButton("📬 Open Jobs", callback_data="admin_jobs_open_0")],
-        [InlineKeyboardButton("❌ Rejected Jobs", callback_data="admin_jobs_rejected_0"),
-         InlineKeyboardButton("⏰ Expired Jobs", callback_data="admin_jobs_expired_0")],
-        [InlineKeyboardButton("🎉 Completed Jobs", callback_data="admin_jobs_completed_0")],
-        [InlineKeyboardButton("🏆 Top Priests", callback_data="admin_jobs_leaderboard")],
-        [InlineKeyboardButton("📥 Jobs Report", callback_data="admin_jobs_pdf_jobs"),
-         InlineKeyboardButton("📥 Priests Report", callback_data="admin_jobs_pdf_priests")],
-    ])
-    await update.message.reply_text("📖 *Admin Job Panel*\n\nSelect a category to view jobs:", reply_markup=keyboard, parse_mode="Markdown")
+    text = await get_dashboard_summary()
+    keyboard = get_admin_main_keyboard()
+    await update.message.reply_text(text, reply_markup=keyboard, parse_mode="Markdown")
 
 
 async def admin_jobs_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,18 +66,9 @@ async def admin_jobs_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     data = query.data
     if data == "admin_jobs_main":
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📊 Analytics Dashboard", callback_data="admin_jobs_analytics")],
-            [InlineKeyboardButton("✅ Booked Jobs", callback_data="admin_jobs_booked_0"),
-             InlineKeyboardButton("📬 Open Jobs", callback_data="admin_jobs_open_0")],
-            [InlineKeyboardButton("❌ Rejected Jobs", callback_data="admin_jobs_rejected_0"),
-             InlineKeyboardButton("⏰ Expired Jobs", callback_data="admin_jobs_expired_0")],
-            [InlineKeyboardButton("🎉 Completed Jobs", callback_data="admin_jobs_completed_0")],
-            [InlineKeyboardButton("🏆 Top Priests", callback_data="admin_jobs_leaderboard")],
-            [InlineKeyboardButton("📥 Jobs Report", callback_data="admin_jobs_pdf_jobs"),
-             InlineKeyboardButton("📥 Priests Report", callback_data="admin_jobs_pdf_priests")],
-        ])
-        await query.edit_message_text("📖 *Admin Job Panel*\n\nSelect a category to view jobs:", reply_markup=keyboard, parse_mode="Markdown")
+        text = await get_dashboard_summary()
+        keyboard = get_admin_main_keyboard()
+        await query.edit_message_text(text, reply_markup=keyboard, parse_mode="Markdown")
         return
 
     parts = data.split("_")
