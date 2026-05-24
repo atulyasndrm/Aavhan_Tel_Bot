@@ -104,7 +104,13 @@ def generate_priests_pdf(users):
             name = safe_text(user.get('name'))
             phone = safe_text(user.get('phone'))
             role = safe_text(user.get('role', 'priest').capitalize())
-            created = safe_text(user.get('created_at').strftime('%Y-%m-%d %H:%M') if user.get('created_at') else 'N/A')
+            
+            created_val = user.get('created_at')
+            if created_val:
+                created_str = created_val if isinstance(created_val, str) else created_val.strftime('%Y-%m-%d %H:%M')
+            else:
+                created_str = 'N/A'
+            created = safe_text(created_str)
             
             data.append([uid, name, phone, role, created])
         

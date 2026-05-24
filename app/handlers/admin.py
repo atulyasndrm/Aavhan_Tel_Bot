@@ -251,13 +251,15 @@ async def _send_priest_search_results(send_func, query_str: str, offset: int):
     users_to_show = users[:5]
     more_available = len(users) > 5
 
-    text = f"🔍 *Search Results for* `{query_str}`\nPage {offset // 5 + 1}\n\n"
+    safe_query = str(query_str).replace('*', '').replace('_', '').replace('`', '')
+    text = f"🔍 *Search Results for* `{safe_query}`\nPage {offset // 5 + 1}\n\n"
     keyboard = []
     
     for u in users_to_show:
+        safe_name = str(u.get('name', 'Unknown')).replace('*', '').replace('_', '').replace('`', '')
         status_emoji = "✅" if u.get("verified") else ("⏳" if u.get("verification_status") == "pending" else "❌")
         text += (
-            f"{status_emoji} *{u.get('name', 'Unknown')}*\n"
+            f"{status_emoji} *{safe_name}*\n"
             f"📞 {u.get('phone', 'N/A')}\n"
             f"🆔 `{u.get('id')}`\n"
             f"📌 Status: {u.get('verification_status', 'N/A').capitalize()}\n"

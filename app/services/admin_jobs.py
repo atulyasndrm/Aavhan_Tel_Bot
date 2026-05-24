@@ -261,41 +261,46 @@ async def handle_rebroadcast(query: CallbackQuery, job_id: str):
 async def send_pdf_report(query: CallbackQuery, context: ContextTypes.DEFAULT_TYPE, report_type: str):
     await query.answer("Generating PDF... Please wait.")
     
-    if report_type == "priests":
-        status_msg = await query.message.reply_text("⏳ Generating complete Priests Report...")
-        users = await user_service.get_all_users_for_report()
-        
-        if not users:
-            await status_msg.edit_text("❌ No priests found to generate a report.")
-            return
+    status_msg = await query.message.reply_text(f"⏳ Generating complete {report_type.capitalize()} Report...")
+    try:
+        if report_type == "priests":
+            users = await user_service.get_all_users_for_report()
             
-        from app.services.pdf_service import generate_priests_pdf
-        pdf_bytes = generate_priests_pdf(users)
-        
-        filename = f"Aavhan_Priests_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-        caption = "📄 *Aavhan Priests Report*\nHere is the complete list of all priests grouped by verification status."
-    else:
-        status_msg = await query.message.reply_text("⏳ Generating complete Jobs Report...")
-        jobs = await job_service.get_all_jobs_for_report()
-        
-        if not jobs:
-            await status_msg.edit_text("❌ No jobs found to generate a report.")
-            return
+            if not users:
+                await status_msg.edit_text("❌ No priests found to generate a report.")
+                return
+                
+            from app.services.pdf_service import generate_priests_pdf
+            pdf_bytes = generate_priests_pdf(users)
             
-        from app.services.pdf_service import generate_jobs_pdf
-        pdf_bytes = generate_jobs_pdf(jobs)
-        
-        filename = f"Aavhan_Jobs_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-        caption = "📄 *Aavhan Master Report*\nHere is the complete list of all jobs grouped by their status."
+            filename = f"Aavhan_Priests_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+            caption = "📄 *Aavhan Priests Report*\nHere is the complete list of all priests grouped by verification status."
+        else:
+            jobs = await job_service.get_all_jobs_for_report()
+            
+            if not jobs:
+                await status_msg.edit_text("❌ No jobs found to generate a report.")
+                return
+                
+            from app.services.pdf_service import generate_jobs_pdf
+            pdf_bytes = generate_jobs_pdf(jobs)
+            
+            filename = f"Aavhan_Jobs_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+            caption = "📄 *Aavhan Master Report*\nHere is the complete list of all jobs grouped by their status."
 
-    await context.bot.send_document(
-        chat_id=query.from_user.id,
-        document=pdf_bytes,
-        filename=filename,
-        caption=caption,
-        parse_mode="Markdown"
-    )
-    await status_msg.delete()
+        await context.bot.send_document(
+            chat_id=query.from_user.id,
+            document=pdf_bytes,
+            filename=filename,
+            caption=caption,
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        from config import logger
+        logger.exception("PDF generation failed")
+        await query.message.reply_text(f"❌ Error generating report: {str(e)}")
+    finally:
+        await status_msg.delete()
 
 
 async def send_analytics_dashboard(query: CallbackQuery, context: ContextTypes.DEFAULT_TYPE):
