@@ -11,8 +11,9 @@ async def get_users_details(user_ids: list[int]):
     """Fetches multiple users from a list of IDs."""
     if not user_ids:
         return []
+    ids_literal = ",".join(f"'{int(uid)}'" for uid in user_ids)
     async with db_pool.acquire() as conn:
-        return await conn.fetch("SELECT * FROM users WHERE id = ANY($1::bigint[])", user_ids)
+        return await conn.fetch(f"SELECT * FROM users WHERE id = ANY(ARRAY[{ids_literal}]::text[])")
 
 async def get_all_users_for_report():
     """Fetches all users for the admin PDF report."""
@@ -39,7 +40,7 @@ async def get_top_priests(limit: int = 10):
         return await conn.fetch("""
             SELECT u.id, u.name, u.phone, COUNT(b.id) as completed_jobs 
             FROM users u 
-            JOIN bookings b ON u.id = b.assigned_priest 
+            JOIN bookings b ON b.assigned_priest = u.id::bigint
             WHERE b.status = 'completed' AND u.verified = TRUE
             GROUP BY u.id, u.name, u.phone
             ORDER BY completed_jobs DESC 
