@@ -12,11 +12,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user.id == int(ADMIN_ID):
         async with db_pool.acquire() as conn:
             await conn.execute("""
-                INSERT INTO users (id, name, role, verification_status, verified)
-                VALUES ($1, $2, 'admin', 'approved', TRUE)
+                INSERT INTO users (id, name, role, verification_status, verified, email, password_hash)
+                VALUES ($1, $2, 'admin', 'approved', TRUE, $3, 'telegram_auth')
                 ON CONFLICT (id) DO UPDATE SET 
                 verified = TRUE, verification_status = 'approved', role = 'admin', name = EXCLUDED.name
-            """, str(user.id), user.full_name)
+            """, str(user.id), user.full_name, f"{user.id}@telegram.internal")
 
     async with db_pool.acquire() as conn:
         db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", str(user.id))

@@ -252,14 +252,14 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO users (id, name, phone, role, verified, verification_status, document, doc_type, created_at, updated_at)
-            VALUES ($1, $2, $3, 'priest', FALSE, 'pending', $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO users (id, name, phone, role, verified, verification_status, document, doc_type, email, password_hash, created_at, updated_at)
+            VALUES ($1, $2, $3, 'priest', FALSE, 'pending', $4, $5, $6, 'telegram_auth', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ON CONFLICT (id) DO UPDATE SET 
             name = EXCLUDED.name, phone = EXCLUDED.phone, 
             verified = FALSE, verification_status = 'pending', document = EXCLUDED.document,
             doc_type = EXCLUDED.doc_type,
             updated_at = CURRENT_TIMESTAMP
-        """, str(user.id), data["name"], data["phone"], data["document"], data["doc_type"])
+        """, str(user.id), data["name"], data["phone"], data["document"], data["doc_type"], f"{user.id}@telegram.internal")
     
     await update.message.reply_text(
         "✅ Submitted! Waiting for admin approval.",
