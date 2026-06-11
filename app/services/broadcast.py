@@ -12,11 +12,12 @@ async def broadcast_job(app, job):
     async with db_pool.acquire() as conn:
         query = "SELECT * FROM users u WHERE u.verified = TRUE"
         args = []
-        
+
         if rejected_priests:
-            args.append(rejected_priests)
-            query += f" AND NOT (u.id = ANY(${len(args)}::bigint[]))"
-            
+            # Inline IDs directly — safe because each is hard-cast to int above
+            ids_literal = ",".join(str(p) for p in rejected_priests)
+            query += f" AND NOT (u.id = ANY(ARRAY[{ids_literal}]::bigint[]))"
+
         if job_datetime:
             args.append(job_datetime)
             query += f""" AND NOT EXISTS (
@@ -26,7 +27,7 @@ async def broadcast_job(app, job):
                 AND b.datetime < (${len(args)}::timestamp + interval '3 hours')
                 AND ${len(args)}::timestamp < (b.datetime + interval '3 hours')
             )"""
-            
+
         users = await conn.fetch(query, *args)
 
     # Generate the custom image dynamically from the job data
