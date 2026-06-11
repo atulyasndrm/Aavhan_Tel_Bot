@@ -5,7 +5,7 @@ from app.services.image_service import generate_job_image
 from config import logger
 
 async def broadcast_job(app, job):
-    rejected_priests = job.get("rejected_by", []) or []
+    rejected_priests = [int(p) for p in (job.get("rejected_by", []) or [])]
     job_datetime = job.get("datetime")
 
     # Find all verified users who have NOT rejected this job and do NOT have a time conflict
