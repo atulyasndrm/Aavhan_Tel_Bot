@@ -16,10 +16,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 VALUES ($1, $2, 'admin', 'approved', TRUE)
                 ON CONFLICT (id) DO UPDATE SET 
                 verified = TRUE, verification_status = 'approved', role = 'admin', name = EXCLUDED.name
-            """, user.id, user.full_name)
+            """, str(user.id), user.full_name)
 
     async with db_pool.acquire() as conn:
-        db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", str(user.id))
     
     if not db_user:
         return await start_verification(update, context)

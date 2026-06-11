@@ -101,7 +101,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Notify Admin
         try:
             async with db_pool.acquire() as conn:
-                user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", user_id)
+                user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", str(user_id))
             priest_name = user_record['name'] if user_record and user_record.get('name') else query.from_user.full_name
             job_title = job.get('title') or job.get('ceremony_type') or 'Unknown Puja'
             admin_text = (
@@ -161,7 +161,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                # Notify the Admin
                try:
                    async with db_pool.acquire() as conn:
-                       user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", user_id)
+                       user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", str(user_id))
                    priest_name = user_record['name'] if user_record and user_record.get('name') else query.from_user.full_name
                    job_title = job_to_broadcast.get('title', 'Unknown Puja')
                    admin_text = (
@@ -412,7 +412,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Notify Admin
         try:
             async with db_pool.acquire() as conn:
-                user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", user_id)
+                user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", str(user_id))
             priest_name = user_record['name'] if user_record and user_record.get('name') else query.from_user.full_name
             job_title = job.get('title') or job.get('ceremony_type') or 'Unknown Puja'
             admin_text = (
@@ -450,7 +450,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 async with db_pool.acquire() as conn:
                     job = await conn.fetchrow("SELECT * FROM bookings WHERE id = $1::uuid", job_id)
-                    user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", user_id)
+                    user_record = await conn.fetchrow("SELECT name FROM users WHERE id = $1", str(user_id))
                     
                 priest_name = user_record['name'] if user_record and user_record.get('name') else query.from_user.full_name
                 job_title = job.get('title', 'Unknown Puja') if job else 'Unknown Puja'

@@ -17,7 +17,7 @@ async def start_verification(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user = update.effective_user
     
     async with db_pool.acquire() as conn:
-        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", str(user.id))
     
     if existing:
         if existing.get("verified"):
@@ -38,7 +38,7 @@ async def edit_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
     async with db_pool.acquire() as conn:
-        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", str(user.id))
     
     if not existing:
         await update.message.reply_text("❌ You are not registered yet. Please type /verify to start.")
@@ -63,7 +63,7 @@ async def send_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
     async with db_pool.acquire() as conn:
-        db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        db_user = await conn.fetchrow("SELECT * FROM users WHERE id = $1", str(user.id))
         
         if not db_user or not db_user.get("verified"):
             await update.message.reply_text("⛔ You must be a verified priest to view your portfolio.")
@@ -259,7 +259,7 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
             verified = FALSE, verification_status = 'pending', document = EXCLUDED.document,
             doc_type = EXCLUDED.doc_type,
             updated_at = CURRENT_TIMESTAMP
-        """, user.id, data["name"], data["phone"], data["document"], data["doc_type"])
+        """, str(user.id), data["name"], data["phone"], data["document"], data["doc_type"])
     
     await update.message.reply_text(
         "✅ Submitted! Waiting for admin approval.",
@@ -278,7 +278,7 @@ async def cancel_auth(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
     async with db_pool.acquire() as conn:
-        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user.id)
+        existing = await conn.fetchrow("SELECT * FROM users WHERE id = $1", str(user.id))
         
     context.user_data.clear()
     
