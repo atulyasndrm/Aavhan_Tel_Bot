@@ -16,13 +16,13 @@ async def broadcast_job(app, job):
         if rejected_priests:
             # Inline IDs directly — safe because each is hard-cast to int above
             ids_literal = ",".join(str(p) for p in rejected_priests)
-            query += f" AND NOT (u.id = ANY(ARRAY[{ids_literal}]::bigint[]))"
+            query += f" AND NOT (u.id::bigint = ANY(ARRAY[{ids_literal}]::bigint[]))"
 
         if job_datetime:
             args.append(job_datetime)
             query += f""" AND NOT EXISTS (
                 SELECT 1 FROM bookings b
-                WHERE b.assigned_priest = u.id
+                WHERE b.assigned_priest = u.id::bigint
                 AND b.status = 'assigned'
                 AND b.datetime < (${len(args)}::timestamp + interval '3 hours')
                 AND ${len(args)}::timestamp < (b.datetime + interval '3 hours')
@@ -68,7 +68,7 @@ async def broadcast_job(app, job):
 
         try:
             msg = await app.bot.send_photo(
-                chat_id=user["id"],
+                chat_id=int(user["id"]),
                 photo=photo_to_send,
                 caption=f"""
 🕉️ <b>{title}</b>
@@ -87,7 +87,7 @@ async def broadcast_job(app, job):
             
             # Add message info to our list to be saved
             messages_sent.append({
-                "chat_id": user["id"],
+                "chat_id": int(user["id"]),
                 "message_id": msg.message_id
             })
 
