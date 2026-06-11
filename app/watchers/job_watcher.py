@@ -46,7 +46,7 @@ async def schedule_retry(job_id: str, last_error: str, attempts: int):
             """,
             job_id,
             last_error[:1000],
-            delay_seconds
+            str(delay_seconds)
         )
 
 
