@@ -3,13 +3,13 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 from app.db.postgres import db_pool
 from app.handlers.auth import start_verification
-from config import ADMIN_ID
+from config import ADMIN_ID, is_admin, ADMIN_IDS
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     
     # Auto-verify the admin so they immediately get access to the menu
-    if user.id == int(ADMIN_ID):
+    if is_admin(user.id):
         async with db_pool.acquire() as conn:
             await conn.execute("""
                 INSERT INTO users (id, name, role, verification_status, verified, email, password_hash)
@@ -39,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     
     # Build the main menu keyboard
-    if user.id == int(ADMIN_ID):
+    if is_admin(user.id):
         keyboard = [
             [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
             [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],

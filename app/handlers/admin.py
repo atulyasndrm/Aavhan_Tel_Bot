@@ -2,7 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, ConversationHandler
 
 from app.db.postgres import db_pool
-from config import ADMIN_ID, logger
+from config import is_admin, logger
 from app.services import user_service
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -90,7 +90,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 BROADCAST_MESSAGE = 30
 
 async def broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or update.effective_user.id != int(ADMIN_ID):
+    if not update.message or not is_admin(update.effective_user.id):
         await update.message.reply_text("⛔ Access denied.")
         return ConversationHandler.END
 
@@ -136,7 +136,7 @@ async def _execute_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE,
 SEARCH_QUERY = 20
 
 async def find_priest_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or update.effective_user.id != int(ADMIN_ID):
+    if not update.message or not is_admin(update.effective_user.id):
         await update.message.reply_text("⛔ Access denied.")
         return ConversationHandler.END
 
@@ -165,7 +165,7 @@ async def find_priest_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     query = update.callback_query
     await query.answer()
     
-    if query.from_user.id != int(ADMIN_ID):
+    if not is_admin(query.from_user.id):
         await query.edit_message_text("⛔ Access denied.")
         return
 

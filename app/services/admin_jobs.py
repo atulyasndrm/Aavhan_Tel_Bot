@@ -2,7 +2,7 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import ContextTypes
 
-from config import ADMIN_ID
+from config import is_admin
 from app.db.postgres import db_pool
 from app.services import job_service, user_service
 from app.services.image_service import generate_job_image
@@ -47,7 +47,7 @@ def get_admin_main_keyboard():
 
 async def admin_jobs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Displays the admin job management menu."""
-    if not update.message or update.effective_user.id != int(ADMIN_ID):
+    if not update.message or not is_admin(update.effective_user.id):
         return
 
     text = await get_dashboard_summary()
@@ -60,7 +60,7 @@ async def admin_jobs_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     query = update.callback_query
     await query.answer()
 
-    if query.from_user.id != int(ADMIN_ID):
+    if not is_admin(query.from_user.id):
         await query.edit_message_text("⛔ Access denied.")
         return
 

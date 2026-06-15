@@ -2,7 +2,7 @@ import logging
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler
 
-from config import ADMIN_ID
+from config import is_admin, ADMIN_IDS
 from app.db.postgres import db_pool
 
 logger = logging.getLogger(__name__)
@@ -282,7 +282,7 @@ async def cancel_auth(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     context.user_data.clear()
     
-    if user.id == int(ADMIN_ID):
+    if is_admin(user.id):
         keyboard = [
             [KeyboardButton("➕ Create Job"), KeyboardButton("📋 Admin Jobs")],
             [KeyboardButton("📢 Broadcast"), KeyboardButton("🔍 Find Priest")],
@@ -328,16 +328,18 @@ async def notify_admin(context, user_id, data):
             """
 
     if data.get("doc_type") == "photo":
-        await context.bot.send_photo(
-            chat_id=int(ADMIN_ID),
-            photo=data["document"],
-            caption=text,
-            reply_markup=keyboard
-        )
+        for admin_id in ADMIN_IDS:
+            await context.bot.send_photo(
+                chat_id=admin_id,
+                photo=data["document"],
+                caption=text,
+                reply_markup=keyboard
+            )
     else:
-        await context.bot.send_document(
-            chat_id=int(ADMIN_ID),
-            document=data["document"],
-            caption=text,
-            reply_markup=keyboard
-        )
+        for admin_id in ADMIN_IDS:
+            await context.bot.send_document(
+                chat_id=admin_id,
+                document=data["document"],
+                caption=text,
+                reply_markup=keyboard
+            )

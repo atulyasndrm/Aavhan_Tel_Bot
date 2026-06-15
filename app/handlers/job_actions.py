@@ -9,7 +9,7 @@ from app.services.conflict_service import has_conflict
 from app.services.broadcast import broadcast_job
 from app.services.image_service import generate_job_image
 from app.services.job_service import get_available_jobs, get_rejected_jobs
-from config import ADMIN_ID, logger
+from config import ADMIN_ID, ADMIN_IDS, logger
 
 from app.db.postgres import db_pool
 
@@ -113,11 +113,12 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Start background task to hide job from other priests
             asyncio.create_task(hide_job_from_others(context.bot, job_id, user_id))
 
-            await context.bot.send_message(
-                chat_id=int(ADMIN_ID), 
-                text=admin_text, 
-                parse_mode="Markdown"
-            )
+            for admin_id in ADMIN_IDS:
+                await context.bot.send_message(
+                    chat_id=admin_id,
+                    text=admin_text,
+                    parse_mode="Markdown"
+                )
         except Exception as e:
             logger.exception("Error notifying admin about acceptance")
 
@@ -170,11 +171,12 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                        f"📿 *Job:* {job_title}\n\n"
                        f"ℹ️ _The job has been automatically re-listed._"
                    )
-                   await context.bot.send_message(
-                       chat_id=int(ADMIN_ID), 
-                       text=admin_text, 
-                       parse_mode="Markdown"
-                   )
+                   for admin_id in ADMIN_IDS:
+                       await context.bot.send_message(
+                           chat_id=admin_id,
+                           text=admin_text,
+                           parse_mode="Markdown"
+                       )
                except Exception as e:
                    logger.exception("Error notifying admin about cancel")
            await edit_reply("❌ You have cancelled your assignment. The job has been re-listed for other priests.")
@@ -424,11 +426,12 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Start background task to hide job from other priests
             asyncio.create_task(hide_job_from_others(context.bot, job_id, user_id))
 
-            await context.bot.send_message(
-                chat_id=int(ADMIN_ID), 
-                text=admin_text, 
-                parse_mode="Markdown"
-            )
+            for admin_id in ADMIN_IDS:
+                await context.bot.send_message(
+                    chat_id=admin_id,
+                    text=admin_text,
+                    parse_mode="Markdown"
+                )
         except Exception as e:
             logger.exception("Error notifying admin about re-acceptance")
 
@@ -460,11 +463,12 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"📿 *Job:* {job_title}\n\n"
                     f"ℹ️ _The priest has marked this job as completed._"
                 )
-                await context.bot.send_message(
-                    chat_id=int(ADMIN_ID), 
-                    text=admin_text, 
-                    parse_mode="Markdown"
-                )
+                for admin_id in ADMIN_IDS:
+                    await context.bot.send_message(
+                        chat_id=admin_id,
+                        text=admin_text,
+                        parse_mode="Markdown"
+                    )
             except Exception as e:
                 logger.exception("Error notifying admin about completion")
         else:

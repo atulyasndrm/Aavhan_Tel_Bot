@@ -1,13 +1,13 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes
 
-from config import ADMIN_ID
+from config import is_admin
 
 
 async def help_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
 
-    if user_id == int(ADMIN_ID):
+    if is_admin(user_id):
         admin_text = (
             "<b>👑 Admin Commands:</b>\n\n"
             "➕ <b>Create Job</b> - Create and broadcast a new Puja job\n"

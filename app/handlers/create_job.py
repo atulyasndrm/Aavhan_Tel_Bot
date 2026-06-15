@@ -3,14 +3,14 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardR
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, MessageHandler, filters
 
 from app.db.postgres import db_pool
-from config import ADMIN_ID
+from config import is_admin
 
 # Define conversation states
 # Use 10-14 to ensure these states NEVER overlap with the auth.py KYC states (0-2)
 (TITLE, DATE, TIME, LOCATION, SAMAGRI, FEES) = range(10, 16)
 
 async def start_job_creation(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != int(ADMIN_ID):
+    if not is_admin(update.effective_user.id):
         await update.message.reply_text("⛔ Access denied.")
         return ConversationHandler.END
 
