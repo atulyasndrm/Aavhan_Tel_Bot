@@ -23,7 +23,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(data.split("_")[2])
 
         async with db_pool.acquire() as conn:
-            await conn.execute("UPDATE users SET verified = TRUE, verification_status = 'approved' WHERE id = $1", user_id)
+            await conn.execute("UPDATE users SET verified = TRUE, verification_status = 'approved' WHERE id = $1", str(user_id))
 
         try:
             await context.bot.send_message(
@@ -72,7 +72,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reason_text = reasons.get(reason_code, "Invalid details provided.")
 
         async with db_pool.acquire() as conn:
-            await conn.execute("UPDATE users SET verified = FALSE, verification_status = 'rejected' WHERE id = $1", user_id)
+            await conn.execute("UPDATE users SET verified = FALSE, verification_status = 'rejected' WHERE id = $1", str(user_id))
 
         try:
             await context.bot.send_message(
@@ -124,7 +124,7 @@ async def _execute_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     for user in users:
         try:
-            await context.bot.send_message(chat_id=user["id"], text=full_message, parse_mode="Markdown")
+            await context.bot.send_message(chat_id=int(user["id"]), text=full_message, parse_mode="Markdown")
             sent_count += 1
         except Exception as e:
             logger.exception("Broadcast error for user %s", user['id'])
@@ -184,7 +184,7 @@ async def find_priest_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         query_str = parts[3]
         
         async with db_pool.acquire() as conn:
-            await conn.execute("UPDATE users SET verified = TRUE, verification_status = 'approved' WHERE id = $1", user_id)
+            await conn.execute("UPDATE users SET verified = TRUE, verification_status = 'approved' WHERE id = $1", str(user_id))
 
         try:
             await context.bot.send_message(
@@ -224,7 +224,7 @@ async def find_priest_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         reason_text = reasons.get(reason_code, "Invalid details provided.")
 
         async with db_pool.acquire() as conn:
-            await conn.execute("UPDATE users SET verified = FALSE, verification_status = 'rejected' WHERE id = $1", user_id)
+            await conn.execute("UPDATE users SET verified = FALSE, verification_status = 'rejected' WHERE id = $1", str(user_id))
 
         try:
             await context.bot.send_message(
