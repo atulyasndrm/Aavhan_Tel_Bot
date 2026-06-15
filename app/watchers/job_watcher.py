@@ -67,16 +67,15 @@ async def mark_job_broadcasted(job_id: str):
 
 async def sync_pending_jobs(app):
     async with db_pool.acquire() as conn:
-        jobs = await conn.fetch(
-            """
-                SELECT * FROM bookings
+        jobs = await conn.fetch("""
+                SELECT id, broadcast_status, status, next_broadcast_at, created_at
+                FROM bookings
                 WHERE broadcast_status IN ('pending', 'failed')
                   AND status IN ('open', 'new')
                   AND next_broadcast_at <= NOW()
                 ORDER BY created_at ASC
                 LIMIT 20
-            """
-        )
+            """)
 
     for job in jobs:
         await process_job(str(job["id"]), app)
@@ -118,7 +117,7 @@ async def watch_jobs(app):
         asyncio.create_task(process_payload(payload))
 
     while True:
-        conn = await asyncpg.connect(DATABASE_URL)
+        conn = await asyncpg.connect(DATABASE_URL, statement_cache_size=0)
         try:
             logger.info("Connected to Neon DB listen channel")
             await conn.add_listener('new_job_channel', handle_notification)

@@ -14,7 +14,10 @@ async def reminder_loop(app):
             now = datetime.now() 
 
             async with db_pool.acquire() as conn:
-                jobs = await conn.fetch("SELECT * FROM bookings WHERE status = 'assigned'")
+                jobs = await conn.fetch("""
+                    SELECT id, title, location, datetime, assigned_priest, reminders_sent
+                    FROM bookings WHERE status = 'assigned'
+                """)
                 
             for job in jobs:
                 job_time = job.get("datetime")
