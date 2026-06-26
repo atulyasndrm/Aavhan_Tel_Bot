@@ -13,7 +13,7 @@ async def get_dashboard_summary():
     async with db_pool.acquire() as conn:
         priests_count = await conn.fetchval("SELECT COUNT(*) FROM users WHERE verified = TRUE")
         pending_priests = await conn.fetchval("SELECT COUNT(*) FROM users WHERE verification_status = 'pending'")
-        open_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status IN ('open', 'new')")
+        open_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status IN ('new', 'pending')")
         assigned_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status = 'assigned'")
         completed_jobs = await conn.fetchval("SELECT COUNT(*) FROM bookings WHERE status = 'completed'")
         
@@ -166,7 +166,7 @@ async def list_rejected_jobs_for_admin(query: CallbackQuery, offset: int):
 
 
 async def list_open_jobs_for_admin(query: CallbackQuery, offset: int):
-    jobs = await job_service.get_jobs_by_status("open", limit=6, offset=offset)
+    jobs = await job_service.get_jobs_by_status("pending", limit=6, offset=offset)
     if not jobs:
         await query.edit_message_text("No open jobs found.")
         return
@@ -268,7 +268,7 @@ async def handle_rebroadcast(query: CallbackQuery, job_id: str):
             SET broadcast_status = 'pending', 
                 next_broadcast_at = CURRENT_TIMESTAMP, 
                 broadcast_attempts = 0 
-            WHERE id = $1::uuid AND status IN ('open', 'new')
+            WHERE id = $1::uuid AND status IN ('new', 'pending')
         """, job_id)
         
     if result.endswith("0"):

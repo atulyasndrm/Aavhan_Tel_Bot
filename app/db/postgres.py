@@ -54,7 +54,7 @@ async def init_db():
                 notes TEXT,
                 location TEXT,
                 fees TEXT,
-                status TEXT DEFAULT 'open',
+                status TEXT DEFAULT 'pending',
                 assigned_priest BIGINT,
                 rejected_by BIGINT[] DEFAULT '{}',
                 broadcast_messages JSONB DEFAULT '[]'::jsonb,
@@ -127,12 +127,7 @@ async def init_db():
         await conn.execute("""
             CREATE OR REPLACE FUNCTION format_website_booking() RETURNS TRIGGER AS $$
             BEGIN
-                -- 1. Map website status 'new' to bot status 'open'
-                IF NEW.status = 'new' THEN
-                    NEW.status := 'open';
-                END IF;
-
-                -- 2. Map website column names to bot column names
+                -- 1. Map website column names to bot column names
                 IF NEW.title IS NULL THEN NEW.title := NEW.ceremony_type; END IF;
                 IF NEW.host_name IS NULL THEN NEW.host_name := NEW.full_name; END IF;
                 IF NEW.host_mobile IS NULL THEN NEW.host_mobile := NEW.mobile; END IF;

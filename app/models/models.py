@@ -9,7 +9,7 @@ def create_job_schema(title, date, time, fees, location, job_datetime=None):
         "datetime": job_datetime,  # Pass the parsed datetime object here
         "location": location,
         "fees": fees,
-        "status": "open",
+        "status": "pending",
         "assigned_priest": None,  
         "rejected_by": [],        
         "reminders_sent": [],

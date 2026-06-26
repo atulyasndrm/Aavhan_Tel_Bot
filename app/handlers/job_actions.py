@@ -76,7 +76,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
            await edit_reply("❌ Job not found.")
            return
 
-        if job.get("status") not in ["open", "new"]:
+        if job.get("status") not in ["new", "pending"]:
            await edit_reply("❌ Job already taken.")
            return
        
@@ -88,7 +88,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with db_pool.acquire() as conn:
             result = await conn.execute("""
                 UPDATE bookings SET status = 'assigned', assigned_priest = $1 
-                WHERE id = $2::uuid AND status IN ('open', 'new')
+                WHERE id = $2::uuid AND status IN ('new', 'pending')
             """, user_id, job_id)
             modified_count = int(result.split()[-1])
 
@@ -141,7 +141,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
        async with db_pool.acquire() as conn:
            result = await conn.execute("""
                UPDATE bookings 
-               SET status = 'open', 
+               SET status = 'pending', 
                    assigned_priest = NULL, 
                    rejected_by = array_append(COALESCE(rejected_by, '{}'::BIGINT[]), $1),
                    reminders_sent = '{}'::TEXT[]
@@ -388,7 +388,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
            await edit_reply("❌ Job not found.")
            return
 
-        if job.get("status") not in ["open", "new"]:
+        if job.get("status") not in ["new", "pending"]:
            await edit_reply("❌ Job already taken by another priest.")
            return
        
@@ -401,7 +401,7 @@ async def job_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             result = await conn.execute("""
                 UPDATE bookings SET status = 'assigned', assigned_priest = $1, 
                 rejected_by = array_remove(rejected_by, $1) 
-                WHERE id = $2::uuid AND status IN ('open', 'new')
+                WHERE id = $2::uuid AND status IN ('new', 'pending')
             """, user_id, job_id)
             modified_count = int(result.split()[-1])
             

@@ -111,11 +111,20 @@ async def get_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     job_datetime = data['job_datetime'] # Grab the pre-validated datetime
 
     # Insert into Database (This will automatically trigger the broadcast!)
+    # Map samagri response to ENUM
+    samagri_by = 'pandit_brings' if 'pandit' in samagri.lower() else 'family_arranges'
+
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO bookings (title, date, time, datetime, location, samagri, fees, status) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'open')
-        """, title, date_str, time_str, job_datetime, location, samagri, fees)
+            INSERT INTO bookings (
+                title, date, time, datetime, location, samagri, fees, status,
+                full_name, mobile, ceremony_type, city,
+                address_line, pincode, samagri_by
+            ) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending',
+                    'Admin Created', '0000000000', 'Custom Puja', 'India',
+                    $5, '000000', $8)
+        """, title, job_datetime.date(), job_datetime.time(), job_datetime, location, samagri, fees, samagri_by)
 
     # Restore admin keyboard
     keyboard = [

@@ -24,7 +24,7 @@ async def claim_pending_job(job_id):
                     updated_at = NOW()
                 WHERE id = $1::uuid
                   AND broadcast_status IN ('pending', 'failed')
-                  AND status IN ('open', 'new')
+                  AND status IN ('new', 'pending')
                   AND next_broadcast_at <= NOW()
                 RETURNING *
             """,
@@ -71,7 +71,7 @@ async def sync_pending_jobs(app):
                 SELECT id, broadcast_status, status, next_broadcast_at, created_at
                 FROM bookings
                 WHERE broadcast_status IN ('pending', 'failed')
-                  AND status IN ('open', 'new')
+                  AND status IN ('new', 'pending')
                   AND next_broadcast_at <= NOW()
                 ORDER BY created_at ASC
                 LIMIT 20

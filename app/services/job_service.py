@@ -5,7 +5,7 @@ async def get_available_jobs(user_id, limit: int = 20, offset: int = 0):
     async with db_pool.acquire() as conn:
         return await conn.fetch("""
             SELECT * FROM bookings b
-            WHERE b.status IN ('open', 'new') 
+            WHERE b.status IN ('new', 'pending') 
             AND NOT ($1 = ANY(COALESCE(b.rejected_by, '{}'::BIGINT[])))
             AND (b.datetime > $2 OR b.datetime IS NULL)
             AND NOT EXISTS (
@@ -47,12 +47,12 @@ async def get_completed_jobs(user_id, limit: int = 20, offset: int = 0):
         """, user_id, limit, offset)
 
 async def get_jobs_by_status(status: str, limit: int = 50, offset: int = 0):
-    """Fetches all jobs with a given status ('open' or 'assigned')."""
+    """Fetches all jobs with a given status ('pending' or 'assigned')."""
     async with db_pool.acquire() as conn:
-        if status == 'open':
+        if status == 'pending':
             return await conn.fetch("""
                 SELECT * FROM bookings 
-                WHERE status IN ('open', 'new')
+                WHERE status IN ('new', 'pending')
                 ORDER BY created_at DESC 
                 LIMIT $1 OFFSET $2
             """, limit, offset)
@@ -75,11 +75,11 @@ async def get_all_rejected_jobs(limit: int = 50, offset: int = 0):
         """, limit, offset)
 
 async def get_expired_unassigned_jobs(limit: int = 50, offset: int = 0):
-    """Fetches jobs that are open/new but their datetime has already passed."""
+    """Fetches jobs that are new/pending but their datetime has already passed."""
     async with db_pool.acquire() as conn:
         return await conn.fetch("""
             SELECT * FROM bookings 
-            WHERE status IN ('open', 'new')
+            WHERE status IN ('new', 'pending')
             AND datetime < $1
             ORDER BY datetime DESC 
             LIMIT $2 OFFSET $3
